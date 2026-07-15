@@ -1,0 +1,110 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CRM 확장단계 추적 리포트</title>
+<style>
+:root{color-scheme:light;--ink:#1a2230;--mut:#5b6b82;--line:#e5e9f0;--brand:#25965a}
+*{box-sizing:border-box}body{font-family:-apple-system,'Segoe UI','Noto Sans KR',sans-serif;color:var(--ink);max-width:1200px;margin:0 auto;padding:32px 26px;line-height:1.5;background:#fafbfc}
+.hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid var(--brand);padding-bottom:12px}
+h1{font-size:23px;margin:0}.meta{font-size:12px;color:var(--mut);text-align:right}.meta b{color:var(--brand)}
+h2{font-size:17px;margin:26px 0 3px;color:#22303f}.h2d{font-size:12px;color:var(--mut);margin-bottom:8px}
+table{border-collapse:collapse;width:100%;font-size:12px;background:#fff;margin:6px 0}
+th,td{border:1px solid var(--line);padding:6px 8px}th{background:#f2f5f9;font-weight:600;text-align:center;font-size:11.5px}
+td.seg{font-weight:600}td.num{text-align:right;font-variant-numeric:tabular-nums}td.d{font-size:11px;color:#586a82}td.mono{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:#6b7790}
+.gcode,.scode2{color:#fff;font-weight:800;text-align:center;border-radius:5px}.sb{font-size:10px;padding:1px 7px;border-radius:6px;font-weight:700}
+.rc{font-size:10px;color:var(--mut);font-weight:400}.pct{font-size:9.5px}
+.clswrap{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.scol{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.scolhd{color:#fff;padding:8px 11px;font-size:13px;font-weight:700}.scode{font-size:15px;font-weight:800;margin-right:4px}.scsub{font-size:10.5px;font-weight:500;opacity:.95;margin-top:2px}
+.gchips{padding:8px}.gchip{display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px dashed #eef1f5}
+.gc{color:#fff;font-weight:800;font-size:11px;padding:1px 7px;border-radius:5px;min-width:34px;text-align:center}.gt{font-size:11.5px;flex:1}.gn{font-size:10.5px;color:var(--mut)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.ktop{display:flex;justify-content:space-between;align-items:center}.kname{font-size:12px;color:var(--mut);font-weight:600}.kbadge{font-size:10px;padding:1px 8px;border-radius:9px;font-weight:700}.kval{font-size:25px;font-weight:800;margin:4px 0 0}
+.ksub{font-size:11px;color:var(--mut)}.kgrp{font-size:11px;margin-top:6px;background:#f4f7fa;border-radius:6px;padding:3px 7px}.kgrp b{color:#2a3a4f}.kdelta{font-size:10.5px;margin-top:5px;color:#8b97a8}.kdelta .base{background:#eef1f5;border-radius:6px;padding:0 5px;font-size:9.5px}
+.up{background:#e7f3ea;color:#1c6b41;font-weight:700;font-size:11px;padding:1px 7px;border-radius:8px}
+.flow{display:flex;align-items:center;gap:6px;margin:8px 0}.fnode{border:2px solid;border-radius:10px;padding:10px 16px;text-align:center;background:#fff;min-width:92px}.fsc{font-size:13px;font-weight:800}.fn{font-size:15px;font-weight:700}.farrow{font-size:10px;color:var(--mut);text-align:center;flex:1}.fdim{color:#b3bdca;font-size:9px}
+.lstrip{display:flex;gap:8px;margin:6px 0 10px}.lchip{border-radius:8px;padding:7px 12px;font-size:11px;flex:1;text-align:center}.lchip b{display:block;font-size:16px}.lchip span{color:#4a5568}
+.note{background:#f6f9f7;border-left:3px solid var(--brand);padding:10px 14px;border-radius:6px;font-size:12.5px;margin:8px 0}.warn{background:#fff6ed;border-left:3px solid #d98324}.small{font-size:11.5px;color:var(--mut)}
+.twocol{display:grid;grid-template-columns:2fr 1fr;gap:14px;align-items:start}
+.srcbar{font-size:11px;color:var(--mut);background:#eef4fb;border-radius:7px;padding:5px 11px;margin-bottom:10px}
+</style></head><body>
+<div class="hd"><div><h1>CRM 확장단계 추적 리포트</h1><div class="small">G16 유형분류 × 확장단계(S1~S4) · 격주 스냅샷 · 데이터 분리형</div></div>
+<div class="meta" id="meta"></div></div>
+<div class="srcbar" id="src"></div>
+
+<h2>① 그룹 마스터 — G1~G16 상세</h2><div class="h2d">활성=≤60일, 이탈=&gt;180일 · '전기Δ(#02부터)'로 추적</div><div id="groups"></div>
+<h2>② 고객 유형 분류 체계</h2><div class="h2d">16개 유형을 카테고리 개수(확장단계)로 묶음</div><div class="clswrap" id="cls"></div>
+<h2>③ 전략 스코어카드</h2><div class="h2d">각 지표가 어떤 그룹에서 나오는지 명시</div><div class="cards" id="score"></div>
+<h2>④ 확장·전이 시나리오</h2><div class="h2d">⭐ 상위 단계로 올리는 경로 · 대상(웜풀 ≤120일)</div><div id="scen"></div>
+<h2>⑤ 단계 이동 (전이)</h2><div class="h2d">카테고리 누적 → 하향 없음. 승급 Δ가 성과 증거(2회차부터)</div><div class="flow" id="flow"></div>
+<h2>⑥ 활동성 히트맵 (단계 × 라이프사이클 4단계)</h2><div class="h2d">활성 ≤60 · 이탈위험 60~120 · 휴면 120~180 · 이탈 &gt;180일</div><div class="lstrip" id="lstrip"></div><div id="heat"></div>
+<div class="twocol"><div><h2>⑦ NTC 업셀풀</h2><div class="h2d">허콤 구매자 중 미경험 규모. 줄면 업셀 성공</div><div id="ntc"></div></div>
+<div><h2>용어집</h2><div id="gloss"></div></div></div>
+<h2>부록 A. 원본 데이터 개요</h2><div id="over"></div>
+<div class="h2d" style="margin-top:8px">카테고리별 구매경험 고객수</div><div id="catexp"></div>
+<div class="note warn" id="limit" style="margin-top:18px"></div>
+<div class="small" style="margin-top:8px">데이터 분리형 · 시트가 생성한 report_data.json을 읽어 렌더 · 격주 갱신</div>
+<script>
+const CONFIG={ dataUrl:"https://script.google.com/macros/s/AKfycbw1Fr4Op650UT9SbJFDdzS2EUUC4RGA3er6CzwfierYQOflqSi-epjEcVPPfNE1XzxUsg/exec" };   /* ← 시트/서버가 만든 JSON 경로. 비우면 내장 데이터 사용 */
+const FALLBACK={"meta": {"snap_date": "2026-07-09", "round": "#01 (기준선)", "n": 35316, "period": "2024-01~", "cadence": "격주(2주)"}, "scorecard": [{"kpi": "확장률", "sub": "2종+ 비중", "val": "41.6%", "dir": "↑", "badge": "좋음", "grp": "S2·S3·S4", "desc": "크로스셀 성과"}, {"kpi": "코어 비중", "sub": "3종+ · LTV엔진", "val": "14.9%", "dir": "↑", "badge": "좋음", "grp": "G6·G7·G9", "desc": "충성화 성과"}, {"kpi": "게이트웨이 의존도", "sub": "허콤단독", "val": "35.0%", "dir": "↓", "badge": "주의", "grp": "G1·G4", "desc": "허콤 편중"}, {"kpi": "활성 비중", "sub": "≤60일", "val": "13.4%", "dir": "↑", "badge": "주의", "grp": "전 그룹", "desc": "최근 구매층"}, {"kpi": "이탈 비중", "sub": ">180일", "val": "63.3%", "dir": "↓", "badge": "위험", "grp": "전 그룹", "desc": "리텐션 최대 과제"}, {"kpi": "NTC 업셀풀", "sub": "허콤→영양제 미경험", "val": "19,824", "dir": "↓", "badge": "기회", "grp": "허콤보유 7그룹", "desc": "최대 업셀"}], "stages": [{"stage": "S1", "label": "단일 · 1종", "n": 20610, "pct": 58.4, "desc": "확장 여지 최대"}, {"stage": "S2", "label": "교차 · 2종", "n": 9461, "pct": 26.8, "desc": "신뢰 형성"}, {"stage": "S3", "label": "멀티 · 3종", "n": 3799, "pct": 10.8, "desc": "고가치 진입"}, {"stage": "S4", "label": "올라운더 · 4종+", "n": 1446, "pct": 4.1, "desc": "LTV 정점"}], "groups": [{"G": "G1", "name": "허니콤츄 단독·단발", "defn": "허니콤츄 (1회)", "stage": "S1", "nxt": "G4/G2 (반복화·덴탈교차)", "n": 9829, "pct": 27.8, "ao": 1.0, "ap": 85380, "act": 1960, "dorm": 2121, "risk": 5748, "active": 627, "churn": 7869}, {"G": "G2", "name": "허콤+덴탈 교차", "defn": "허니콤츄+덴탈", "stage": "S2", "nxt": "G6 (영양제 추가)", "n": 4985, "pct": 14.1, "ao": 1.6, "ap": 196068, "act": 1751, "dorm": 1464, "risk": 1770, "active": 585, "churn": 3234}, {"G": "G3", "name": "영양제 단독", "defn": "영양제", "stage": "S1", "nxt": "G8/G14 (허콤·덴탈 추가)", "n": 3895, "pct": 11.0, "ao": 1.2, "ap": 98053, "act": 1728, "dorm": 845, "risk": 1322, "active": 478, "churn": 2167}, {"G": "G4", "name": "허니콤츄 단독·반복", "defn": "허니콤츄 (2회+)", "stage": "S1", "nxt": "G2 (덴탈 교차)", "n": 2546, "pct": 7.2, "ao": 2.9, "ap": 278827, "act": 735, "dorm": 734, "risk": 1077, "active": 238, "churn": 1811}, {"G": "G5", "name": "위생/패드 단독", "defn": "위생/패드", "stage": "S1", "nxt": "G16 (허콤 추가)", "n": 2074, "pct": 5.9, "ao": 1.2, "ap": 86416, "act": 899, "dorm": 626, "risk": 549, "active": 342, "churn": 1175}, {"G": "G6", "name": "허콤+덴탈+영양제 트리오", "defn": "허니콤츄+덴탈+영양제", "stage": "S3", "nxt": "G9 (올라운더)", "n": 1989, "pct": 5.6, "ao": 2.7, "ap": 447566, "act": 716, "dorm": 573, "risk": 700, "active": 283, "churn": 1273}, {"G": "G7", "name": "기타 3종 멀티", "defn": "3종 혼합", "stage": "S3", "nxt": "G9 (올라운더)", "n": 1810, "pct": 5.1, "ao": 3.1, "ap": 457731, "act": 1156, "dorm": 532, "risk": 122, "active": 475, "churn": 654}, {"G": "G8", "name": "허콤+영양제 교차", "defn": "허니콤츄+영양제", "stage": "S2", "nxt": "G6 (덴탈 추가)", "n": 1607, "pct": 4.6, "ao": 2.5, "ap": 335074, "act": 558, "dorm": 420, "risk": 629, "active": 200, "churn": 1049}, {"G": "G9", "name": "올라운더(4종+)", "defn": "4종 이상", "stage": "S4", "nxt": "유지(정점)", "n": 1446, "pct": 4.1, "ao": 6.3, "ap": 1142648, "act": 1059, "dorm": 341, "risk": 46, "active": 566, "churn": 387}, {"G": "G10", "name": "기타 2종 교차", "defn": "비허콤 2종", "stage": "S2", "nxt": "S3 (카테고리 확장)", "n": 1207, "pct": 3.4, "ao": 1.9, "ap": 224875, "act": 694, "dorm": 433, "risk": 80, "active": 283, "churn": 513}, {"G": "G11", "name": "덴탈 단독", "defn": "덴탈", "stage": "S1", "nxt": "G2 (허콤 추가)", "n": 1043, "pct": 3.0, "ao": 1.0, "ap": 50633, "act": 440, "dorm": 328, "risk": 275, "active": 157, "churn": 603}, {"G": "G12", "name": "간식 단독", "defn": "간식", "stage": "S1", "nxt": "G13 (허콤 추가)", "n": 716, "pct": 2.0, "ao": 1.2, "ap": 77946, "act": 256, "dorm": 445, "risk": 15, "active": 119, "churn": 460}, {"G": "G13", "name": "허콤+간식 교차", "defn": "허니콤츄+간식", "stage": "S2", "nxt": "G6/G7 (건강 카테고리)", "n": 628, "pct": 1.8, "ao": 2.1, "ap": 285361, "act": 349, "dorm": 262, "risk": 17, "active": 117, "churn": 279}, {"G": "G14", "name": "덴탈+영양제 교차", "defn": "덴탈+영양제", "stage": "S2", "nxt": "G6 (허콤 추가)", "n": 593, "pct": 1.7, "ao": 1.7, "ap": 233160, "act": 291, "dorm": 171, "risk": 131, "active": 97, "churn": 302}, {"G": "G15", "name": "산책 단독", "defn": "산책", "stage": "S1", "nxt": "허콤/위생 교차", "n": 507, "pct": 1.4, "ao": 1.0, "ap": 86183, "act": 162, "dorm": 325, "risk": 20, "active": 88, "churn": 345}, {"G": "G16", "name": "허콤+위생 교차", "defn": "허니콤츄+위생/패드", "stage": "S2", "nxt": "G7 (덴탈·영양제)", "n": 441, "pct": 1.2, "ao": 2.4, "ap": 284593, "act": 197, "dorm": 124, "risk": 120, "active": 91, "churn": 244}], "lifecycle_total": {"활성": [4746, 13.4], "이탈위험": [5009, 14.2], "휴면": [3196, 9.0], "이탈": [22365, 63.3]}, "heatmap": [{"stage": "S1", "vals": [2049, 2435, 1696, 14430]}, {"stage": "S2", "vals": [1373, 1483, 984, 5621]}, {"stage": "S3", "vals": [758, 722, 392, 1927]}, {"stage": "S4", "vals": [566, 369, 124, 387]}], "scenarios": [{"code": "SC1", "name": "게이트웨이 확장", "path": "S1→S2", "color": "#3F9E6A", "from": "허콤단독(G1·G4) → 허콤+덴탈(G2)", "warm": 1852, "total": 12375, "basis": "덴탈 침투율 36.9% · 골든타임 45~90일", "offer": "오랄겔(소) 첫구매 쿠폰 + 허콤 재구매 번들", "effect": "85,380원 → 196,068원", "uplift": "+130%"}, {"code": "SC2", "name": "트리오 승급", "path": "S2→S3", "color": "#C99A3A", "from": "허콤+덴탈(G2)·허콤+영양제(G8) → 트리오(G6)", "warm": 1628, "total": 6592, "basis": "덴탈보유자 영양제 침투 33.8% · 저항 최저", "offer": "브레스핏/유산균 첫구매 20%(브릿지)", "effect": "196,068원 → 447,566원", "uplift": "+128%"}, {"code": "SC3", "name": "VIP 완성", "path": "S3→S4", "color": "#C96F8F", "from": "트리오·멀티(G6·G7) → 올라운더(G9)", "warm": 1480, "total": 3799, "basis": "이미 3종 경험 · 미보유 1~2종만", "offer": "전 카테고리 구독 묶음 + VIP 혜택", "effect": "447,566원 → 1,142,648원", "uplift": "+155%"}, {"code": "SC4", "name": "비허콤 입문 유입", "path": "S1 교차", "color": "#5B7FB0", "from": "영양제·덴탈·위생 단독 → 허콤 첫진입", "warm": 2632, "total": 5559, "basis": "덴탈→허콤 80.3% · 간식→허콤 62%", "offer": "허콤 대표상품 입문 특가(치킨S 소용량)", "effect": "객단가 신규 창출", "uplift": "진입"}], "ntc": [{"path": "허콤 → 영양제 미경험", "val": 19824}, {"path": "허콤 → 덴탈 미경험", "val": 15776}], "catexp": [["허니콤츄", 25016, 70.8], ["덴탈라인업", 11505, 32.6], ["영양제", 10511, 29.8], ["위생/패드", 4819, 13.6], ["간식", 3935, 11.1], ["산책용품", 1333, 3.8]], "glossary": [["NTC (Not-Tried-Category)", "브랜드는 알지만 특정 카테고리 미경험 고객. 최대 업셀 대상."], ["확장단계 S1~S4", "구매한 카테고리 종류 수. 위로 갈수록 LTV↑·이탈↓."], ["라이프사이클 4단계", "활성 ≤60 / 이탈위험 60~120 / 휴면 120~180 / 이탈 >180일."], ["전이/승급", "낮은 단계→상위 단계 이동. CRM 성공 핵심 지표."], ["게이트웨이", "브랜드 첫 진입 유형(허콤단독 G1·G4)."], ["침투율", "A 구매자 중 B도 산 비율. 크로스셀 경로 우선순위."]], "data_overview": [["추출1 · 고객×카테고리(long)", "57,119행", "유형화 원천", "고유고객 35,316 · 카테고리 6종 · 배분액 7.47억"], ["추출2 · 고객 요약", "35,316행", "비중·recency 기준값", "총결제 78.6억 · 평균 22.3만 · 기간 2024-01-02~2026-07-09"], ["추출3 · 와이드 피벗", "35,316행", "클러스터링 투입", "카테고리별 주문수 6컬럼"]], "limit": "산책 카테고리 표본 작음 → 안정성 낮음. 주문건수 기준이라 고가·저빈도(영양제 등) 매출기여는 금액축 별도분석 권장. 마케팅팀 리포트(12개월·23,734명)와 수치 혼용 금지."};
+
+const SCOL={S1:"#5B7FB0",S2:"#3F9E6A",S3:"#C99A3A",S4:"#C96F8F"};
+const SBG={S1:"#eef3fb",S2:"#eef8f1",S3:"#fdf6ea",S4:"#fbeef2"};
+const LCOLOR={"활성":"#e7f3ea","이탈위험":"#fdeee2","휴면":"#f1f3f6","이탈":"#fbe0dc"};
+const nf=n=>Number(n).toLocaleString("ko-KR");
+function render(D){
+ const M=D.meta;
+ document.getElementById("meta").innerHTML=`기준일 <b>${M.snap_date}</b> · 회차 <b>${M.round}</b><br>대상 ${nf(M.n)}명 · 기간 ${M.period} · 주기 ${M.cadence}`;
+ // 그룹마스터
+ let g=D.groups.map(r=>`<tr><td class="gcode" style="background:${SCOL[r.stage]}">${r.G}</td><td class="seg">${r.name}</td><td class="d">${r.defn}</td>
+  <td style="text-align:center"><span class="sb" style="background:${SBG[r.stage]};color:${SCOL[r.stage]}">${r.stage}</span></td>
+  <td class="num">${nf(r.n)}</td><td class="num">${r.pct}%</td><td class="num">${r.ao}</td><td class="num">${nf(r.ap)}</td>
+  <td class="num" style="color:#2b8a5a">${nf(r.active)}</td><td class="num" style="color:#c05a4d">${nf(r.churn)}</td><td class="d">${r.nxt}</td></tr>`).join("");
+ document.getElementById("groups").innerHTML=`<table><thead><tr><th>G</th><th>유형</th><th>정의(카테고리 조합)</th><th>단계</th><th>고객수</th><th>비중</th><th>평균<br>주문</th><th>평균결제<br>(원)</th><th>활성</th><th>이탈</th><th>전이 목표</th></tr></thead><tbody>${g}</tbody></table>`;
+ // 분류체계
+ let cls=D.stages.map(s=>{
+   let chips=D.groups.filter(r=>r.stage===s.stage).map(r=>`<div class="gchip"><span class="gc" style="background:${SCOL[s.stage]}">${r.G}</span><span class="gt">${r.name}</span><span class="gn">${nf(r.n)}</span></div>`).join("");
+   return `<div class="scol"><div class="scolhd" style="background:${SCOL[s.stage]}"><span class="scode">${s.stage}</span> ${s.label}<div class="scsub">${nf(s.n)}명 · ${s.pct}% · ${s.desc}</div></div><div class="gchips">${chips}</div></div>`;}).join("");
+ document.getElementById("cls").innerHTML=cls;
+ // 스코어카드
+ const BADGE={"좋음":["#e7f3ea","#1c6b41"],"주의":["#fbe6e1","#9c4a3a"],"보통":["#eef4fb","#3a5a86"],"기회":["#fff5e6","#8a6216"],"위험":["#fbe0dc","#a33322"]};
+ let kc=D.scorecard.map(k=>{let dcol=k.dir==="↑"?"#25965a":"#c96f6f";let b=BADGE[k.badge];
+   return `<div class="card"><div class="ktop"><span class="kname">${k.kpi}</span><span class="kbadge" style="background:${b[0]};color:${b[1]}">${k.badge}</span></div>
+   <div class="kval">${k.val} <span style="font-size:17px;color:${dcol}">${k.dir}</span></div><div class="ksub">${k.sub}</div>
+   <div class="kgrp">📌 관련 그룹 <b>${k.grp}</b></div><div class="kdelta">전기대비 <b>—</b> <span class="base">기준선</span> · ${k.desc}</div></div>`;}).join("");
+ document.getElementById("score").innerHTML=kc;
+ // 시나리오
+ let sc=D.scenarios.map(c=>{let up=c.uplift!=="진입"?`<span class="up">${c.uplift}</span>`:`<span class="up" style="background:#eef4fb;color:#3a5a86">신규 진입</span>`;
+   return `<tr><td class="scode2" style="background:${c.color}">${c.code}</td><td class="seg">${c.name}<div class="d">${c.path}</div></td><td class="d">${c.from}</td>
+   <td class="num"><b>${nf(c.warm)}</b><div class="d">/ ${nf(c.total)}</div></td><td class="d">${c.offer}</td><td class="d">${c.basis}</td><td style="text-align:center">${c.effect}<div>${up}</div></td></tr>`;}).join("");
+ document.getElementById("scen").innerHTML=`<table><thead><tr><th>#</th><th>시나리오</th><th>경로</th><th>대상<br>(웜풀/전체)</th><th>추천 오퍼</th><th>데이터 근거</th><th>기대 효과(객단가)</th></tr></thead><tbody>${sc}</tbody></table>`;
+ // flow
+ let fl="";D.stages.forEach((s,i)=>{fl+=`<div class="fnode" style="border-color:${SCOL[s.stage]}"><div class="fsc" style="color:${SCOL[s.stage]}">${s.stage}</div><div class="fn">${nf(s.n)}</div></div>`;if(i<3)fl+=`<div class="farrow">승급 Δ<br><span class="fdim">#02부터</span></div>`;});
+ document.getElementById("flow").innerHTML=fl;
+ // 라이프사이클 스트립 + 히트맵
+ const LC=["활성","이탈위험","휴면","이탈"];
+ let ls=LC.map(l=>`<div class="lchip" style="background:${LCOLOR[l]}"><b>${nf(D.lifecycle_total[l][0])}</b><span>${l} ${D.lifecycle_total[l][1]}%</span></div>`).join("");
+ document.getElementById("lstrip").innerHTML=ls;
+ let mx=Math.max(...D.heatmap.map(h=>h.vals[3]));
+ const stgAct={S1:"이탈 최다 → 윈백 1순위",S2:"트리오 업셀 여지",S3:"고가치 리텐션",S4:"VIP 관리(이탈 최소)"};
+ let hr=D.heatmap.map(h=>{let tot=h.vals.reduce((a,b)=>a+b,0);let a=h.vals[3]/mx;let bg=`rgba(201,90,90,${(0.08+a*0.8).toFixed(2)})`;let col=a>0.55?"#fff":"#3a1f1f";
+   let cells=LC.map((l,i)=>{let cbg=l==="이탈"?bg:LCOLOR[l];let cc=l==="이탈"?col:"#1a2230";return `<td class="num" style="background:${cbg};color:${cc}">${nf(h.vals[i])}<div class="pct" style="color:${l==="이탈"?cc:"#8b97a8"}">${Math.round(h.vals[i]/tot*100)}%</div></td>`;}).join("");
+   return `<tr><td class="seg">${h.stage}</td>${cells}<td class="num"><b>${nf(tot)}</b></td><td class="d">${stgAct[h.stage]}</td></tr>`;}).join("");
+ document.getElementById("heat").innerHTML=`<table style="max-width:960px"><thead><tr><th>단계</th><th>활성<br>(≤60)</th><th>이탈위험<br>(60~120)</th><th>휴면<br>(120~180)</th><th>이탈<br>(>180)</th><th>합계</th><th>해석 · 우선 액션</th></tr></thead><tbody>${hr}</tbody></table>`;
+ // ntc
+ document.getElementById("ntc").innerHTML=`<table><thead><tr><th>NTC 경로</th><th>이번 기간</th><th>전기Δ</th></tr></thead><tbody>${D.ntc.map(n=>`<tr><td class="seg">${n.path}</td><td class="num">${nf(n.val)}</td><td class="num">—</td></tr>`).join("")}</tbody></table>`;
+ // glossary
+ document.getElementById("gloss").innerHTML=`<table><tbody>${D.glossary.map(x=>`<tr><td class="seg" style="white-space:nowrap">${x[0]}</td><td class="d">${x[1]}</td></tr>`).join("")}</tbody></table>`;
+ // data overview
+ document.getElementById("over").innerHTML=`<table><thead><tr><th>파일</th><th>역할</th><th>요약</th></tr></thead><tbody>${D.data_overview.map(x=>`<tr><td class="seg">${x[0]}<div class="rc">${x[1]}</div></td><td class="d">${x[2]}</td><td class="d">${x[3]}</td></tr>`).join("")}</tbody></table>`;
+ document.getElementById("catexp").innerHTML=`<table style="max-width:420px"><thead><tr><th>카테고리</th><th>구매경험 고객</th><th>침투율</th></tr></thead><tbody>${D.catexp.map(c=>`<tr><td class="seg">${c[0]}</td><td class="num">${nf(c[1])}</td><td class="num">${c[2]}%</td></tr>`).join("")}</tbody></table>`;
+ document.getElementById("limit").innerHTML=`<b>한계(합의).</b> ${D.limit}`;
+}
+// 데이터 로드: CONFIG.dataUrl 우선(시트가 만든 JSON), 실패 시 내장 FALLBACK
+async function boot(){
+ let src="내장 기준선 데이터";
+ let D=FALLBACK;
+ try{ if(CONFIG.dataUrl){ const r=await fetch(CONFIG.dataUrl,{cache:"no-store"}); if(r.ok){ D=await r.json(); src="외부 데이터: "+CONFIG.dataUrl; } } }catch(e){ src="내장 기준선(외부 로드 실패)"; }
+ document.getElementById("src").textContent="데이터 소스 · "+src;
+ render(D);
+}
+boot();
+
+</script>
+</body></html>
