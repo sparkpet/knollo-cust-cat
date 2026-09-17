@@ -1,0 +1,238 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Knollo 고객 유형화 리포트</title>
+<style>
+:root{--ink:#141c2b;--mut:#5f6e86;--line:#e6ebf3;--brand:#1f9d57;--warn:#e07b39}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:-apple-system,'Segoe UI','Noto Sans KR',sans-serif;color:var(--ink);min-height:100vh;
+ background:radial-gradient(45% 40% at 12% 8%,#d6f2e3 0%,rgba(214,242,227,0) 60%),radial-gradient(40% 45% at 92% 6%,#dbe8fb 0%,rgba(219,232,251,0) 60%),radial-gradient(50% 45% at 85% 92%,#f6e6da 0%,rgba(246,230,218,0) 55%),radial-gradient(45% 45% at 8% 95%,#e7e0f6 0%,rgba(231,224,246,0) 55%),#f7f9fc}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 18px}
+.hd{display:flex;justify-content:space-between;align-items:flex-end}h1{font-size:21px;margin:0}.sub{font-size:12px;color:var(--mut);margin-top:3px}
+.meta{font-size:12px;color:var(--mut);text-align:right}.meta b{color:var(--brand)}
+.banner{display:none;font-size:11.5px;background:#fff6ed;color:#7a5a1e;border-radius:9px;padding:7px 12px;margin:10px 0}
+.menu{display:flex;gap:8px;margin:16px 0 4px;flex-wrap:wrap}
+.mi{padding:9px 15px;border-radius:11px;background:rgba(255,255,255,.6);border:1px solid var(--line);cursor:pointer;font-weight:700;font-size:13px;color:#5b6b82;backdrop-filter:blur(6px)}
+.mi.on{background:#fff;color:var(--brand);box-shadow:0 4px 14px rgba(31,157,87,.14)}
+.page{display:none}.page.on{display:block}
+.tile{background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:16px;padding:15px 16px;margin-top:12px;backdrop-filter:blur(8px);box-shadow:0 6px 20px rgba(20,30,50,.05)}
+.tile h2{font-size:14px;margin:0 0 2px}.tile .d{font-size:11px;color:var(--mut);margin-bottom:9px}
+table{border-collapse:collapse;width:100%;font-size:11px}
+th,td{border:1px solid #eef1f6;padding:5px 6px;text-align:center}th{background:#f4f7fa;color:#5b6b82;font-weight:600;font-size:10px}
+td.rh{background:#f8fafc;font-weight:700;text-align:left;white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}td.l{text-align:left}
+.n{font-weight:800;font-size:13px}.bar4{display:flex;height:7px;border-radius:4px;overflow:hidden;margin:4px 0 3px}.bar4>i{display:block}
+.mini{font-size:8.6px;color:#6a7789}
+.m1 td.cell{cursor:pointer}.m1 td.cell:hover{outline:2px solid var(--brand);outline-offset:-2px}
+.cell2{text-align:right}.rev{font-weight:800;font-size:11.3px}.contrib{font-size:9px;color:#5b6b82}.tot{color:#4b3fc0;font-weight:800}
+.btns{display:inline-flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.btn{font-size:11px;font-weight:700;border:1px solid #d7deea;background:#fff;color:#5b6b82;border-radius:8px;padding:4px 12px;cursor:pointer}.btn.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.xbrow{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px}.xb{white-space:nowrap;border-color:#bfe0cd;color:#1f7a45}.xb:hover{background:#eaf7ef}
+.skurow{cursor:pointer}.skurow:hover{background:#f3f9f5}.skurow.on{background:#eaf7ef}
+.drill{margin-top:10px;border:1px dashed #c7d0dd;border-radius:10px;padding:10px 12px;background:#fbfcfe;display:none}.drill.on{display:block}
+.note{font-size:10.5px;color:#7a5a1e;background:#fff6ed;border-radius:6px;padding:5px 9px;margin-top:6px}
+.wrapx{overflow-x:auto}.fail{color:#c0392b}.amt{font-size:9px;color:#5b6b82}.sub2{font-size:10.5px;font-weight:700;color:#41505f;margin:10px 0 3px}
+.gl{font-size:11.5px;color:#33414f;line-height:1.55}.gl b{color:#1e2a3a}.gl .row{padding:6px 0;border-bottom:1px solid var(--line)}
+.glsec .st{font-size:12px;font-weight:800;color:#1f2b3a;margin:14px 0 7px}
+.glgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:720px){.glgrid{grid-template-columns:1fr}}
+.glcard{border:1px solid var(--line);border-radius:11px;padding:11px 13px;background:#fff;border-left:4px solid var(--brand)}
+.glcard .t{font-weight:800;font-size:12.5px;margin-bottom:3px;color:#1e2a3a}.glcard .x{font-size:11px;color:#41505f;line-height:1.5}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.chip{font-size:10px;font-weight:700;border-radius:6px;padding:1px 8px;background:#eef1f5;color:#41505f}.chip.c{color:#fff}
+.leg{font-size:10px;color:#5b6b82;margin-top:6px;display:flex;gap:12px;flex-wrap:wrap}.leg span{display:inline-flex;gap:4px;align-items:center}.leg i{width:10px;height:10px;border-radius:2px}
+</style></head><body><div class="wrap">
+<div class="hd"><div><h1>Knollo 고객 유형화 리포트</h1><div class="sub">라이프사이클 × 카테고리 × 브랜드충성 · CRM 기여·전환 · 시트→Apps Script→GitHub 자동빌드</div></div><div class="meta" id="meta"></div></div>
+<div class="banner" id="banner"></div>
+<div class="menu">
+  <div class="mi on" onclick="go(0)">ⓘ 용어·정의</div>
+  <div class="mi" onclick="go(1)">① 유형 지형도</div>
+  <div class="mi" onclick="go(2)">② 카테고리 매출·CRM 기여</div>
+  <div class="mi" onclick="go(3)">③ 발송 전환·기여 매출</div>
+</div>
+<div class="page on" id="p0"></div>
+<div class="page" id="p1"></div>
+<div class="page" id="p2"></div>
+<div class="page" id="p3"></div>
+</div>
+<script>
+var LIFE=["최우수","우량","신규","이탈징후","관망","이탈"];
+var CATS=["허니콤츄","덴탈라인업","영양제","위생/패드","산책용품","간식"];
+var GC=["#1f6b3f","#7bc49b","#e0a458","#c8d0da"], GL=["코","성","위","비"], GN=["코어","성장","위기","비충성"];
+var LC={"최우수":"#1f6b3f","우량":"#25965a","신규":"#5aa0c9","이탈징후":"#e07b39","관망":"#9b8cc4","이탈":"#8a97a8"};
+var fmt=n=>Number(n||0).toLocaleString('ko-KR');
+var won=n=>fmt(Math.round(Number(n||0)))+'원';   // 전체 단위 표기 (예: 1,870,123원)
+var pct=(a,b)=>b?Math.round(a/b*1000)/10:0;
+/* ★ 인원 추출용 Apps Script 웹앱 URL (배포 후 여기에 입력). 비우면 안내 표시. */
+var EXTRACT_URL=""; // 또는 report_data.json meta.extract_url 사용
+function go(i){document.querySelectorAll('.mi').forEach((m,k)=>m.classList.toggle('on',k===i));document.querySelectorAll('.page').forEach((p,k)=>p.classList.toggle('on',k===i));}
+function heat(core,tot){var a=Math.min(1,tot?(core/tot)/0.55:0);var t=Math.round(255-(255-233)*a),g=Math.round(255-(255-246)*a),b=Math.round(255-(255-238)*a);return 'rgb('+t+','+g+','+b+')';}
+function crmHeat(p){if(!p)return '#fff';var a=Math.min(1,p/0.5);return 'rgba(31,157,87,'+(0.06+a*0.22)+')';}
+
+var D=null, PREVM=null;
+function render(d){D=d;
+ if(!EXTRACT_URL && d.meta && d.meta.extract_url) EXTRACT_URL=d.meta.extract_url;
+ document.getElementById('meta').innerHTML=`기간 <b>${d.meta.latest_period||''}</b> · 전체 <b>${fmt(d.meta.n)}</b>명<br>빌드 ${d.meta.built_at||''} · 스냅 ${d.meta.periods||d.matrix.length}회`;
+ if(d.meta.sample){var b=document.getElementById('banner');b.style.display='block';b.textContent='⚠ 샘플 데이터(실데이터 아님). 시트→Apps Script 빌드 시 report_data.json 으로 대체.';}
+ glossary(); matrixTab(); contribTab('day'); convTab();
+}
+
+/* ⓘ 용어집 */
+function glossary(){
+ function lum(hex){if(!hex||hex[0]!=='#'||hex.length<7)return 1;var r=parseInt(hex.substr(1,2),16),g=parseInt(hex.substr(3,2),16),b=parseInt(hex.substr(5,2),16);return (0.299*r+0.587*g+0.114*b)/255;}
+ function chip(t,c){if(!c)return `<span class="chip">${t}</span>`;var dark=lum(c)<0.62;return `<span class="chip" style="background:${c};color:${dark?'#fff':'#2c3a4a'}">${t}</span>`;}
+ function chips(arr){return '<div class="chips">'+arr.map(function(a){return chip(a[0],a[1]);}).join('')+'</div>';}
+ function card(t,x,extra){return `<div class="glcard" ${extra&&extra.color?`style="border-left-color:${extra.color}"`:''}><div class="t">${t}</div><div class="x">${x}</div>${extra&&extra.chips?chips(extra.chips):''}</div>`;}
+ var lifeChips=LIFE.map(function(L){return [L,LC[L]];});
+ var gradeChips=[["코어",GC[0]],["성장",GC[1]],["위기",GC[2]],["비충성",GC[3]]];
+
+ var sec1=card("라이프사이클 <span class='mini'>· 행축</span>",
+    "구매 <b>최근성·빈도</b> 기반 6단계. 고객당 1개(배타).<br>최우수 ≤60일·5회+ · 우량 ≤60일·2~4회 · 신규 ≤60일·1회 · 이탈징후 61~150일·3회+ · 관망 61~150일·≤2회 · 이탈 >150일.",{chips:lifeChips})
+  + card("브랜드 충성 등급 <span class='mini'>· 셀 안</span>",
+    "라이프사이클과 <b>다른 축</b>. 코어 5회+·2카테+·≤90일 · 성장 3회+·≤90일 · 위기 3회+인데 >90일 · 비충성 그 외. 셀 = 총원 + 등급별 인원.",{chips:gradeChips})
+  + card("대표 카테고리 <span class='mini'>· 열축</span>","고객이 <b>가장 자주 산 카테고리</b>(주문수 1위).",{chips:CATS.map(function(c){return [c];})});
+
+ var sec2=card("CRM 기여","매출 중 <b>CRM 발급 쿠폰</b>(crm_campaign_target)이 사용된 몫. 카테×기간 격자에서 ₩/비율.")
+  + card("전환 <span class='mini'>· 발송→7일</span>","발송 후 7일 내 결제. 속도로 구분.",{chips:[["≤3일","#1f7a45"],["≤5일","#5aa0c9"],["≤7일","#8a97a8"]]})
+  + card("매출 3분류","전환 매출을 쿠폰 사용 형태로 분리.",{chips:[["쿠폰=캠페인쿠폰","#1f7a45"],["기여=다른쿠폰","#3b7bbf"],["비쿠폰=무쿠폰","#8a97a8"]]});
+
+ var sec3=card("SKU 기준","crm_sku_map(sku→rep_sku, <b>units</b>=구성갯수) → crm_product(option_name) → 카테고리. 라인금액은 units 비중으로 rep_sku 배분. 보조표²에서 rep_sku 내 sku_code(단품·번들) TOP5.")
+  + card("인원 추출 <span class='mini'>· PII</span>","유형 지형도 셀 클릭 → <b>인원 추출</b> → Apps Script 웹앱이 customers_pii 탭 필터 → <b>새 구글시트 생성</b>(연락처 포함·마스킹 없음). PII는 구글 인증 안에만, 공개 리포트/GitHub 미저장.",{color:"#e07b39"});
+
+ var h='<div class="tile"><h2>용어·정의</h2><div class="d">이 리포트가 쓰는 축·등급·지표 정의.</div>'+
+   '<div class="glsec"><div class="st">▪ 분류 축 (누구를 어떻게 나누나)</div><div class="glgrid">'+sec1+'</div></div>'+
+   '<div class="glsec"><div class="st">▪ 매출·전환 지표</div><div class="glgrid">'+sec2+'</div></div>'+
+   '<div class="glsec"><div class="st">▪ 데이터·운영</div><div class="glgrid">'+sec3+'</div></div>'+
+  '</div>';
+ document.getElementById('p0').innerHTML=h;
+}
+
+/* ① 유형 지형도 */
+function matrixTab(){
+ var cur=D.matrix[D.matrix.length-1], prev=D.matrix.length>1?D.matrix[D.matrix.length-2]:null;
+ function cellOf(m,L,C){var lc=m.cells.find(x=>x.life===L);return lc?lc.cats.find(x=>x.cat===C):null;}
+ var h='<div class="tile"><h2>유형 지형도 — 라이프사이클 × 카테고리</h2><div class="d">셀 = 총원 + 4색 비율 바 + 등급 요약(코·성·위·비). 배경=코어 비중. 셀 클릭 → 등급 브레이크다운.</div>';
+ h+='<table class="m1"><tr><th>라이프 \\ 카테</th>'+CATS.map(c=>`<th>${c}</th>`).join('')+'</tr>';
+ LIFE.forEach(function(L){h+=`<tr><td class="rh">${L}</td>`;CATS.forEach(function(C){var x=cellOf(cur,L,C)||{core:0,grow:0,risk:0,non:0};var tot=x.core+x.grow+x.risk+x.non;var v=[x.core,x.grow,x.risk,x.non];
+  var bar=v.map((n,i)=>`<i style="width:${tot?n/tot*100:0}%;background:${GC[i]}"></i>`).join('');
+  h+=`<td class="cell" style="background:${heat(x.core,tot)}" onclick="drill('${L}','${C}')"><div class="n">${fmt(tot)}<span style="font-weight:600;font-size:9px;color:#6a7789"> 명</span></div><div class="bar4">${bar}</div><div class="mini">코${x.core} 성${x.grow} 위${x.risk} 비${x.non}</div></td>`;});h+='</tr>';});
+ h+='</table><div class="leg">'+GN.map((g,i)=>`<span><i style="background:${GC[i]}"></i>${g}</span>`).join('')+'</div>';
+ h+='<div class="drill" id="drill"></div></div>';
+ document.getElementById('p1').innerHTML=h;
+ PREVM=prev;
+}
+function drill(L,C){
+ var cur=D.matrix[D.matrix.length-1];var prev=PREVM;
+ function cellOf(m,L,C){var lc=m.cells.find(x=>x.life===L);return lc?lc.cats.find(x=>x.cat===C):null;}
+ var x=cellOf(cur,L,C)||{core:0,grow:0,risk:0,non:0};var tot=x.core+x.grow+x.risk+x.non;
+ var p=prev?cellOf(prev,L,C):null;
+ function dl(cur,prev){if(prev==null)return'';var dd=cur-prev;if(!dd)return' <span style="color:#8a97a8">±0</span>';return ` <span style="color:${dd>0?'#1f8a5b':'#c0392b'}">${dd>0?'▲':'▼'}${fmt(Math.abs(dd))}</span>`;}
+ function eb(g,cnt){return `<span class="btn xb" onclick="extract('${L}','${C}','${g}')">${g} 추출 · ${fmt(cnt)}명</span>`;}
+ var h=`<b>${L} × ${C}</b> · 총 ${fmt(tot)}명<table style="margin-top:6px"><tr><th>등급</th><th class="num">인원</th><th class="num">비율</th><th class="num">직전대비</th></tr>`+
+  GN.map(function(g,i){var key=['core','grow','risk','non'][i];return `<tr><td class="l"><b>${g}</b></td><td class="num">${fmt(x[key])}명</td><td class="num">${pct(x[key],tot)}%</td><td class="num">${p?dl(x[key],p[key]):'-'}</td></tr>`;}).join('')+'</table>'+
+  `<div style="margin-top:9px;font-size:11px"><b>인원 추출</b> <span class="mini">(연락처 포함·마스킹 없음 · 새 구글시트 생성)</span>`+
+  `<div class="xbrow">`+eb('전체',tot)+eb('코어',x.core)+eb('성장',x.grow)+eb('위기',x.risk)+eb('비충성',x.non)+`</div></div>`+
+  `<div class="note">추출은 구글 인증 안(Apps Script 웹앱)에서만 동작하며 PII는 공개 리포트/GitHub에 저장되지 않습니다.</div>`;
+ var el=document.getElementById('drill');el.innerHTML=h;el.classList.add('on');
+}
+function extract(L,C,grade){
+ if(!EXTRACT_URL){alert('인원 추출 URL 미설정.\n\nApps Script 웹앱(doGet)을 배포한 뒤, report.html 상단 EXTRACT_URL 에 웹앱 URL을 넣으세요.\n그 전엔 시트의 [유형화 리포트] 메뉴 > [인원 추출]로도 가능합니다.');return;}
+ var u=EXTRACT_URL+(EXTRACT_URL.indexOf('?')>=0?'&':'?')+'life='+encodeURIComponent(L)+'&cat='+encodeURIComponent(C)+'&grade='+encodeURIComponent(grade);
+ window.open(u,'_blank');
+}
+
+/* ② 카테 매출·CRM 기여 (일/주/월 롤업) */
+function rollup(grain){
+ var map={};
+ D.cat_contrib.forEach(function(r){var k;
+   if(grain==='day')k=r.d; else if(grain==='month')k=r.d.slice(0,7);
+   else{var dt=new Date(r.d+'T00:00:00');var day=(dt.getDay()+6)%7;dt.setDate(dt.getDate()-day);k=dt.toISOString().slice(0,10);}
+   map[k]=map[k]||{}; map[k][r.cat]=map[k][r.cat]||{rev:0,crm:0}; map[k][r.cat].rev+=r.rev; map[k][r.cat].crm+=r.crm_rev;});
+ return Object.keys(map).sort().reverse().slice(0,8).map(function(k){return {label:k, byCat:map[k]};});
+}
+function contribTab(grain){
+ var rows=rollup(grain);
+ var h='<div class="tile"><h2>카테고리별 매출·CRM 기여</h2>';
+ h+='<div class="btns">'+[['day','일별'],['week','주별'],['month','월별']].map(g=>`<span class="btn ${g[0]===grain?'on':''}" onclick="contribTab('${g[0]}')">${g[1]}</span>`).join('')+'</div>';
+ h+='<div class="d">셀=실매출 + CRM기여 ₩/%. 오른쪽=전체.</div><div class="wrapx"><table><tr><th>'+({day:'일자',week:'주(월시작)',month:'월'})[grain]+'</th>'+CATS.map(c=>`<th>${c}</th>`).join('')+'<th class="tot">전체</th></tr>';
+ rows.forEach(function(r){var tot=0;var cells='';CATS.forEach(function(c){var x=r.byCat[c]||{rev:0,crm:0};tot+=x.rev;var p=x.rev?x.crm/x.rev:0;cells+=`<td class="cell2" style="background:${crmHeat(p)}"><div class="rev">${won(x.rev)}</div><div class="contrib">CRM ${won(x.crm)} / ${pct(x.crm,x.rev)}%</div></td>`;});
+  h+=`<tr><td class="rh">${r.label}</td>${cells}<td class="cell2 tot">${won(tot)}</td></tr>`;});
+ h+='</table></div>';
+ // TOP5 SKU 보조표
+ h+='<div class="sub2">보조표 · 카테고리별 TOP5 SKU (매출·비율)</div>';
+ h+='<div class="btns" id="catb">'+CATS.map((c,i)=>`<span class="btn ${i===0?'on':''}" onclick="topSku('${c}',this)">${c}</span>`).join('')+'</div><div id="topskuTbl"></div>';
+ h+='<div class="sub2">보조표² · 선택 SKU의 sku_code(판매 코드·번들 포함) TOP5 <span class="mini">— 위 표에서 행을 클릭</span></div><div id="skuCodeTbl"></div>';
+ h+='</div>';
+ document.getElementById('p2').innerHTML=h;
+ topSku(CATS[0]);
+}
+function topSku(cat,el){
+ if(el){document.querySelectorAll('#catb .btn').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
+ var rows=(D.cat_top_sku||{})[cat]||[];
+ var h='<table><tr><th>순위</th><th>상품명(option_name)</th><th>rep_sku</th><th class="num">매출</th><th class="num">비율</th></tr>'+
+  (rows.length?rows.map(r=>`<tr class="skurow" onclick="skuCode('${r.rep_sku}','${(r.name||'').replace(/'/g,"\\'")}',this)"><td>${r.rnk}</td><td class="l">${r.name}</td><td><b>${r.rep_sku}</b></td><td class="num">${won(r.rev)}</td><td class="num">${r.ratio}%</td></tr>`).join(''):'<tr><td colspan="5" class="mini">데이터 없음</td></tr>')+'</table>';
+ document.getElementById('topskuTbl').innerHTML=h;
+ document.getElementById('skuCodeTbl').innerHTML='';
+ if(rows.length) skuCode(rows[0].rep_sku, rows[0].name);
+}
+function skuCode(rep,name,el){
+ if(el){document.querySelectorAll('#topskuTbl .skurow').forEach(r=>r.classList.remove('on'));el.classList.add('on');}
+ var rows=(D.cat_sku_code||{})[rep]||[];
+ var h=`<div class="mini" style="margin-bottom:3px">${rep} · ${name} — 판매 sku_code TOP5</div><table><tr><th>순위</th><th>sku_code</th><th class="num">매출</th><th class="num">주문수</th><th class="num">비율</th></tr>`+
+  (rows.length?rows.map(r=>`<tr><td>${r.rnk}</td><td class="l">${r.sku_code}</td><td class="num">${won(r.rev)}</td><td class="num">${fmt(r.orders)}</td><td class="num">${r.ratio}%</td></tr>`).join(''):'<tr><td colspan="5" class="mini">데이터 없음(빌드에 sku_code_detail 포함 필요)</td></tr>')+'</table>';
+ document.getElementById('skuCodeTbl').innerHTML=h;
+}
+
+/* ③ 발송 전환·기여 */
+function convTab(){
+ var h='<div class="tile"><h2>발송 전환·기여 매출</h2><div class="d">≤3/≤5/≤7일 = 전환 명·금액. 객단가=전환매출/인원. 쿠폰=캠페인쿠폰 / 기여=다른쿠폰 / 비쿠폰=무쿠폰. 미전환=7일 초과.</div>';
+ h+='<div class="wrapx"><table><tr><th>타깃</th><th class="num">발송</th><th class="num">≤3일(명/₩)</th><th class="num">≤5일(명/₩)</th><th class="num">≤7일(명/₩)</th><th class="num">객단가</th><th class="num">쿠폰</th><th class="num">기여</th><th class="num">비쿠폰</th><th class="num">미전환</th></tr>';
+ (D.conversion||[]).forEach(function(c){var aov=c.c7?Math.round(c.r7/c.c7):0;
+  h+=`<tr><td class="rh">${c.campaign}</td><td class="num">${fmt(c.sent)}</td>`+
+   `<td class="num">${c.c3}<span class="amt"> / ${won(c.r3)}</span></td>`+
+   `<td class="num">${c.c5}<span class="amt"> / ${won(c.r5)}</span></td>`+
+   `<td class="num"><b>${c.c7}</b><span class="amt"> / ${won(c.r7)}</span></td>`+
+   `<td class="num">${won(aov)}</td>`+
+   `<td class="num" style="color:#1f7a45;font-weight:700">${won(c.coupon_rev)}</td>`+
+   `<td class="num" style="color:#3b7bbf">${won(c.contrib_rev)}</td>`+
+   `<td class="num">${won(c.noncoupon_rev)}</td>`+
+   `<td class="num fail">${fmt(c.fail)}</td></tr>`;});
+ h+='</table></div>';
+ // 기여 SKU 보조표
+ h+='<div class="sub2">보조표 · 타깃별 전환 기여 상품(rep_sku) TOP5</div>';
+ var cs=D.conv_sku||{};var camps=Object.keys(cs);
+ h+='<div class="btns" id="convb">'+camps.map((c,i)=>`<span class="btn ${i===0?'on':''}" onclick="convSku('${c.replace(/'/g,"\\'")}',this)">${c}</span>`).join('')+'</div><div id="convskuTbl"></div>';
+ h+='</div>';
+ document.getElementById('p3').innerHTML=h;
+ if(camps.length) convSku(camps[0]);
+}
+function convSku(cp,el){
+ if(el){document.querySelectorAll('#convb .btn').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
+ var rows=(D.conv_sku||{})[cp]||[];
+ var h='<table><tr><th>순위</th><th>상품명</th><th>rep_sku</th><th>카테</th><th class="num">기여매출</th><th class="num">비율</th></tr>'+
+  rows.map(r=>`<tr><td>${r.rnk}</td><td class="l">${r.name}</td><td>${r.rep_sku}</td><td>${r.cat}</td><td class="num">${won(r.rev)}</td><td class="num">${r.ratio}%</td></tr>`).join('')+'</table>';
+ document.getElementById('convskuTbl').innerHTML=h;
+}
+
+/* FALLBACK (샘플·실 상품명) */
+var FALLBACK={meta:{latest_period:"2026-09-14",n:37576,built_at:"2026-09-14 06:00",periods:2,sample:true},
+ matrix:[
+  {period:"2026-09-07",cells:LIFE.map(function(L,li){return {life:L,cats:CATS.map(function(C,ci){var base=[[360,120,30,10],[180,340,90,30],[80,390,200,310],[110,170,240,40],[45,158,216,301],[126,420,714,2940]][li];var f=[1,.5,.35,.28,.22,.2][ci];return {cat:C,core:Math.round(base[0]*f),grow:Math.round(base[1]*f),risk:Math.round(base[2]*f),non:Math.round(base[3]*f)};})};})},
+  {period:"2026-09-14",cells:LIFE.map(function(L,li){return {life:L,cats:CATS.map(function(C,ci){var base=[[380,120,30,10],[190,350,90,30],[85,400,205,320],[115,175,245,40],[46,160,220,305],[124,418,710,2930]][li];var f=[1,.5,.35,.28,.22,.2][ci];return {cat:C,core:Math.round(base[0]*f),grow:Math.round(base[1]*f),risk:Math.round(base[2]*f),non:Math.round(base[3]*f)};})};})}
+ ],
+ cat_contrib:(function(){var a=[];var cats=CATS;for(var i=0;i<21;i++){var dt=new Date(2026,8,17-i);var d=dt.toISOString().slice(0,10);cats.forEach(function(c,ci){var b=[2200000,1500000,620000,560000,440000,1300000][ci];var rev=Math.round(b*(0.85+((i+ci)%4)*0.08));var p=[.15,.2,.08,.06,.16,.11][ci];a.push({d:d,cat:c,rev:rev,crm_rev:Math.round(rev*p)});});}return a;})(),
+ cat_top_sku:{"허니콤츄":[{rnk:1,rep_sku:"SP04987",name:"치킨S",rev:8200000,ratio:38},{rnk:2,rep_sku:"SP11609",name:"치킨L",rev:5100000,ratio:24},{rnk:3,rep_sku:"SP06915",name:"베지M",rev:3200000,ratio:15},{rnk:4,rep_sku:"SP07225",name:"황태M",rev:2600000,ratio:12},{rnk:5,rep_sku:"SP09174",name:"카밍M",rev:2300000,ratio:11}],
+  "덴탈라인업":[{rnk:1,rep_sku:"SP07244",name:"오랄겔(소)",rev:6100000,ratio:44},{rnk:2,rep_sku:"SP09675",name:"오랄겔(대)",rev:3600000,ratio:26},{rnk:3,rep_sku:"SP07617",name:"바이레프 바이플라그 칫솔 10p",rev:2100000,ratio:15},{rnk:4,rep_sku:"SP09201",name:"삼각칫솔",rev:1300000,ratio:9},{rnk:5,rep_sku:"SP07244",name:"오랄겔(소)",rev:800000,ratio:6}],
+  "영양제":[{rnk:1,rep_sku:"SP06999",name:"유산균",rev:2900000,ratio:32},{rnk:2,rep_sku:"SP09999",name:"에너지핏",rev:2100000,ratio:23},{rnk:3,rep_sku:"SP09696",name:"브레스핏",rev:1400000,ratio:15},{rnk:4,rep_sku:"SP07121",name:"멀티핏",rev:1100000,ratio:12},{rnk:5,rep_sku:"SP09090",name:"조인트핏",rev:800000,ratio:9}],
+  "위생/패드":[{rnk:1,rep_sku:"SP07809",name:"퍼즐패드",rev:2600000,ratio:42},{rnk:2,rep_sku:"SP08924",name:"습관패드 대형 3봉",rev:1700000,ratio:27},{rnk:3,rep_sku:"SP07807",name:"퍼즐매트 표준형",rev:1100000,ratio:18},{rnk:4,rep_sku:"SP10028",name:"바디티슈",rev:500000,ratio:8},{rnk:5,rep_sku:"SP07842",name:"풉백",rev:300000,ratio:5}],
+  "산책용품":[{rnk:1,rep_sku:"SP08906",name:"이지플레이 하네스M",rev:1900000,ratio:40},{rnk:2,rep_sku:"SP08907",name:"이지플레이 리쉬",rev:1200000,ratio:25},{rnk:3,rep_sku:"SP08905",name:"이지플레이 하네스S",rev:800000,ratio:17}],
+  "간식":[{rnk:1,rep_sku:"SP01197",name:"드룰린 한입육포 소고기 180g",rev:1400000,ratio:20},{rnk:2,rep_sku:"SP01402",name:"드룰린 바로트릿 소고기 130g",rev:1000000,ratio:14},{rnk:3,rep_sku:"SP01263",name:"드룰린 즐겅즐겅 한우스틱 S",rev:700000,ratio:10}]},
+ cat_sku_code:{
+  "SP04987":[{rnk:1,sku_code:"04987_06999_07244",rev:3200000,orders:410,ratio:39},{rnk:2,sku_code:"big_dental_04987",rev:2100000,orders:260,ratio:26},{rnk:3,sku_code:"dental_04987",rev:1400000,orders:180,ratio:17},{rnk:4,sku_code:"09201_07244_04987",rev:900000,orders:120,ratio:11},{rnk:5,sku_code:"4987_8903_7477_9571",rev:600000,orders:70,ratio:7}],
+  "SP07244":[{rnk:1,sku_code:"04987_06999_07244",rev:2600000,orders:410,ratio:43},{rnk:2,sku_code:"big_dental_04987",rev:1500000,orders:260,ratio:25},{rnk:3,sku_code:"09201_07244_07225",rev:1000000,orders:150,ratio:16},{rnk:4,sku_code:"dental_06915",rev:600000,orders:90,ratio:10},{rnk:5,sku_code:"07477_07244_07617",rev:400000,orders:55,ratio:6}],
+  "SP06999":[{rnk:1,sku_code:"04987_06999_07244",rev:1700000,orders:410,ratio:41},{rnk:2,sku_code:"09359_06999_07121",rev:1100000,orders:210,ratio:26},{rnk:3,sku_code:"06915_06999_07244",rev:800000,orders:150,ratio:19},{rnk:4,sku_code:"big_dental_07225",rev:600000,orders:95,ratio:14}]},
+ conversion:[
+  {campaign:"20260914_RFM챔피언",sent:1028,c3:132,r3:6100000,c5:181,r5:8400000,c7:214,r7:9820000,coupon_rev:6900000,contrib_rev:1720000,noncoupon_rev:1200000,fail:814},
+  {campaign:"20260914_이탈위기충성",sent:275,c3:38,r3:1900000,c5:54,r5:2700000,c7:63,r7:3150000,coupon_rev:2380000,contrib_rev:470000,noncoupon_rev:300000,fail:212},
+  {campaign:"20260914_첫구매후미재구매",sent:846,c3:41,r3:1230000,c5:68,r5:2040000,c7:88,r7:2640000,coupon_rev:2010000,contrib_rev:380000,noncoupon_rev:250000,fail:758}],
+ conv_sku:{"20260914_RFM챔피언":[{rnk:1,rep_sku:"SP04987",name:"치킨S",cat:"허니콤츄",rev:4100000,ratio:42},{rnk:2,rep_sku:"SP06999",name:"유산균",cat:"영양제",rev:2300000,ratio:23},{rnk:3,rep_sku:"SP07244",name:"오랄겔(소)",cat:"덴탈라인업",rev:1400000,ratio:14}],
+  "20260914_이탈위기충성":[{rnk:1,rep_sku:"SP11609",name:"치킨L",cat:"허니콤츄",rev:1200000,ratio:38},{rnk:2,rep_sku:"SP04987",name:"치킨S",cat:"허니콤츄",rev:800000,ratio:25}],
+  "20260914_첫구매후미재구매":[{rnk:1,rep_sku:"SP04987",name:"치킨S",cat:"허니콤츄",rev:1500000,ratio:57},{rnk:2,rep_sku:"SP06999",name:"유산균",cat:"영양제",rev:500000,ratio:19}]}};
+fetch('report_data.json').then(r=>r.ok?r.json():Promise.reject()).then(render).catch(()=>render(FALLBACK));
+</script></body></html>
