@@ -59,11 +59,12 @@ var LIFE=["최우수","우량","신규","이탈징후","관망","이탈"];
 var CATS=["허니콤츄","덴탈라인업","영양제","위생/패드","산책용품","간식"];
 var GC=["#1f6b3f","#7bc49b","#5aa0c9","#c8d0da"], GL=["코","성","관","비"], GN=["코어","성장","관계형성","비충성"];
 var LC={"최우수":"#1f6b3f","우량":"#25965a","신규":"#5aa0c9","이탈징후":"#e07b39","관망":"#9b8cc4","이탈":"#8a97a8"};
+var num=n=>n===''||n==null?0:Number(n);
 var fmt=n=>Number(n||0).toLocaleString('ko-KR');
 var won=n=>fmt(Math.round(Number(n||0)))+'원';   // 전체 단위 표기 (예: 1,870,123원)
 var pct=(a,b)=>b?Math.round(a/b*1000)/10:0;
 /* ★ 인원 추출용 Apps Script 웹앱 URL (배포 후 여기에 입력). 비우면 안내 표시. */
-var EXTRACT_URL="https://script.google.com/a/macros/sparkpetkorea.com/s/AKfycbyls84TH10dxtr5ZFv87Xh0JTnJetRCB8wZ-uUOLkKty0gsCPIFe3KeB4_sZHvz1xZF3Q/exec";
+var EXTRACT_URL="";
 function go(i){document.querySelectorAll('.mi').forEach((m,k)=>m.classList.toggle('on',k===i));document.querySelectorAll('.page').forEach((p,k)=>p.classList.toggle('on',k===i));}
 function heat(core,tot){var a=Math.min(1,tot?(core/tot)/0.55:0);var t=Math.round(255-(255-233)*a),g=Math.round(255-(255-246)*a),b=Math.round(255-(255-238)*a);return 'rgb('+t+','+g+','+b+')';}
 function crmHeat(p){if(!p)return '#fff';var a=Math.min(1,p/0.5);return 'rgba(31,157,87,'+(0.06+a*0.22)+')';}
