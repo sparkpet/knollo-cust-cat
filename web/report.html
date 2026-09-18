@@ -54,20 +54,19 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}td.l{text-align
 <script>
 var LIFE=["최우수","우량","신규","이탈징후","관망","이탈"];
 var CATS=["허니콤츄","덴탈라인업","영양제","위생/패드","산책용품","간식"];
-var GC=["#1f6b3f","#7bc49b","#e0a458","#c8d0da"], GL=["코","성","위","비"], GN=["코어","성장","위기","비충성"];
+var GC=["#1f6b3f","#7bc49b","#5aa0c9","#c8d0da"], GL=["코","성","관","비"], GN=["코어","성장","관계형성","비충성"];
 var LC={"최우수":"#1f6b3f","우량":"#25965a","신규":"#5aa0c9","이탈징후":"#e07b39","관망":"#9b8cc4","이탈":"#8a97a8"};
 var fmt=n=>Number(n||0).toLocaleString('ko-KR');
 var won=n=>fmt(Math.round(Number(n||0)))+'원';   // 전체 단위 표기 (예: 1,870,123원)
 var pct=(a,b)=>b?Math.round(a/b*1000)/10:0;
 /* ★ 인원 추출용 Apps Script 웹앱 URL (배포 후 여기에 입력). 비우면 안내 표시. */
-var EXTRACT_URL = "https://script.google.com/a/macros/sparkpetkorea.com/s/AKfycbyjJm7_u8Ggls7PnLIHoxipc63bak0BUFbO6EaXtNJctr4-0rCO3eZbOgYXwzX52wUWFQ/exec";
+var EXTRACT_URL="";
 function go(i){document.querySelectorAll('.mi').forEach((m,k)=>m.classList.toggle('on',k===i));document.querySelectorAll('.page').forEach((p,k)=>p.classList.toggle('on',k===i));}
 function heat(core,tot){var a=Math.min(1,tot?(core/tot)/0.55:0);var t=Math.round(255-(255-233)*a),g=Math.round(255-(255-246)*a),b=Math.round(255-(255-238)*a);return 'rgb('+t+','+g+','+b+')';}
 function crmHeat(p){if(!p)return '#fff';var a=Math.min(1,p/0.5);return 'rgba(31,157,87,'+(0.06+a*0.22)+')';}
 
 var D=null, PREVM=null;
 function render(d){D=d;
- if(!EXTRACT_URL && d.meta && d.meta.extract_url) EXTRACT_URL=d.meta.extract_url;
  document.getElementById('meta').innerHTML=`기간 <b>${d.meta.latest_period||''}</b> · 전체 <b>${fmt(d.meta.n)}</b>명<br>빌드 ${d.meta.built_at||''} · 스냅 ${d.meta.periods||d.matrix.length}회`;
  if(d.meta.sample){var b=document.getElementById('banner');b.style.display='block';b.textContent='⚠ 샘플 데이터(실데이터 아님). 시트→Apps Script 빌드 시 report_data.json 으로 대체.';}
  glossary(); matrixTab(); contribTab('day'); convTab();
@@ -79,13 +78,25 @@ function glossary(){
  function chip(t,c){if(!c)return `<span class="chip">${t}</span>`;var dark=lum(c)<0.62;return `<span class="chip" style="background:${c};color:${dark?'#fff':'#2c3a4a'}">${t}</span>`;}
  function chips(arr){return '<div class="chips">'+arr.map(function(a){return chip(a[0],a[1]);}).join('')+'</div>';}
  function card(t,x,extra){return `<div class="glcard" ${extra&&extra.color?`style="border-left-color:${extra.color}"`:''}><div class="t">${t}</div><div class="x">${x}</div>${extra&&extra.chips?chips(extra.chips):''}</div>`;}
- var lifeChips=LIFE.map(function(L){return [L,LC[L]];});
- var gradeChips=[["코어",GC[0]],["성장",GC[1]],["위기",GC[2]],["비충성",GC[3]]];
-
- var sec1=card("라이프사이클 <span class='mini'>· 행축</span>",
-    "구매 <b>최근성·빈도</b> 기반 6단계. 고객당 1개(배타).<br>최우수 ≤60일·5회+ · 우량 ≤60일·2~4회 · 신규 ≤60일·1회 · 이탈징후 61~150일·3회+ · 관망 61~150일·≤2회 · 이탈 >150일.",{chips:lifeChips})
-  + card("브랜드 충성 등급 <span class='mini'>· 셀 안</span>",
-    "라이프사이클과 <b>다른 축</b>. 코어 5회+·2카테+·≤90일 · 성장 3회+·≤90일 · 위기 3회+인데 >90일 · 비충성 그 외. 셀 = 총원 + 등급별 인원.",{chips:gradeChips})
+ function deftbl(title,sub,colHead,rows){
+   return `<div class="glcard"><div class="t">${title}</div><div class="x" style="margin-bottom:6px">${sub}</div>`+
+     `<table><tr><th style="text-align:left">${colHead}</th><th style="text-align:left">정의</th></tr>`+
+     rows.map(function(r){return `<tr><td style="text-align:left"><span class="chip" style="background:${r[1]};color:${lum(r[1])<0.62?'#fff':'#2c3a4a'}">${r[0]}</span></td><td style="text-align:left" class="x">${r[2]}</td></tr>`;}).join('')+
+     `</table></div>`;
+ }
+ var lifeTbl=deftbl("라이프사이클 <span class='mini'>· 행축</span>","구매 <b>최근성 × 빈도</b>. 고객당 1개(배타).","단계",[
+   ["최우수",LC["최우수"],"최근성 ≤60일 · 주문 5회+"],
+   ["우량",LC["우량"],"≤60일 · 2~4회"],
+   ["신규",LC["신규"],"≤60일 · 1회"],
+   ["이탈징후",LC["이탈징후"],"61~150일 · 3회+"],
+   ["관망",LC["관망"],"61~150일 · ≤2회"],
+   ["이탈",LC["이탈"],">150일"]]);
+ var loyTbl=deftbl("브랜드 충성 등급 <span class='mini'>· 셀 안</span>","라이프사이클과 <b>독립</b>. <b>빈도 × 카테폭</b>만 사용(최근성 미포함) → 모든 단계에서 4등급이 나타남.","등급",[
+   ["코어",GC[0],"주문 5회+ · 카테 2개+ (깊고 넓은 반복)"],
+   ["성장",GC[1],"주문 3회+ (반복 형성)"],
+   ["관계형성",GC[2],"주문 2회 (첫 재구매)"],
+   ["비충성",GC[3],"주문 1회 (단발)"]]);
+ var sec1=lifeTbl+loyTbl
   + card("대표 카테고리 <span class='mini'>· 열축</span>","고객이 <b>가장 자주 산 카테고리</b>(주문수 1위).",{chips:CATS.map(function(c){return [c];})});
 
  var sec2=card("CRM 기여","매출 중 <b>CRM 발급 쿠폰</b>(crm_campaign_target)이 사용된 몫. 카테×기간 격자에서 ₩/비율.")
@@ -127,7 +138,7 @@ function drill(L,C){
  var h=`<b>${L} × ${C}</b> · 총 ${fmt(tot)}명<table style="margin-top:6px"><tr><th>등급</th><th class="num">인원</th><th class="num">비율</th><th class="num">직전대비</th></tr>`+
   GN.map(function(g,i){var key=['core','grow','risk','non'][i];return `<tr><td class="l"><b>${g}</b></td><td class="num">${fmt(x[key])}명</td><td class="num">${pct(x[key],tot)}%</td><td class="num">${p?dl(x[key],p[key]):'-'}</td></tr>`;}).join('')+'</table>'+
   `<div style="margin-top:9px;font-size:11px"><b>인원 추출</b> <span class="mini">(연락처 포함·마스킹 없음 · 새 구글시트 생성)</span>`+
-  `<div class="xbrow">`+eb('전체',tot)+eb('코어',x.core)+eb('성장',x.grow)+eb('위기',x.risk)+eb('비충성',x.non)+`</div></div>`+
+  `<div class="xbrow">`+eb('전체',tot)+eb('코어',x.core)+eb('성장',x.grow)+eb('관계형성',x.risk)+eb('비충성',x.non)+`</div></div>`+
   `<div class="note">추출은 구글 인증 안(Apps Script 웹앱)에서만 동작하며 PII는 공개 리포트/GitHub에 저장되지 않습니다.</div>`;
  var el=document.getElementById('drill');el.innerHTML=h;el.classList.add('on');
 }
