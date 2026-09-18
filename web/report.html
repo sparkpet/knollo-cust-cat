@@ -38,18 +38,20 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}td.l{text-align
 .chip{font-size:10px;font-weight:700;border-radius:6px;padding:1px 8px;background:#eef1f5;color:#41505f}.chip.c{color:#fff}
 .leg{font-size:10px;color:#5b6b82;margin-top:6px;display:flex;gap:12px;flex-wrap:wrap}.leg span{display:inline-flex;gap:4px;align-items:center}.leg i{width:10px;height:10px;border-radius:2px}
 </style></head><body><div class="wrap">
-<div class="hd"><div><h1>Knollo 고객 유형화 리포트</h1><div class="sub"></div></div><div class="meta" id="meta"></div></div>
+<div class="hd"><div><h1>Knollo 고객 유형화 리포트</h1><div class="sub">라이프사이클 × 카테고리 × 브랜드충성 · CRM 기여·전환 · 시트→Apps Script→GitHub 자동빌드</div></div><div class="meta" id="meta"></div></div>
 <div class="banner" id="banner"></div>
 <div class="menu">
   <div class="mi on" onclick="go(0)">ⓘ 용어·정의</div>
   <div class="mi" onclick="go(1)">① 유형 지형도</div>
   <div class="mi" onclick="go(2)">② 카테고리 매출·CRM 기여</div>
   <div class="mi" onclick="go(3)">③ 발송 전환·기여 매출</div>
+  <div class="mi" onclick="go(4)">④ 코호트 · 첫구매·재구매</div>
 </div>
 <div class="page on" id="p0"></div>
 <div class="page" id="p1"></div>
 <div class="page" id="p2"></div>
 <div class="page" id="p3"></div>
+<div class="page" id="p4"></div>
 </div>
 <script>
 var LIFE=["최우수","우량","신규","이탈징후","관망","이탈"];
@@ -60,7 +62,7 @@ var fmt=n=>Number(n||0).toLocaleString('ko-KR');
 var won=n=>fmt(Math.round(Number(n||0)))+'원';   // 전체 단위 표기 (예: 1,870,123원)
 var pct=(a,b)=>b?Math.round(a/b*1000)/10:0;
 /* ★ 인원 추출용 Apps Script 웹앱 URL (배포 후 여기에 입력). 비우면 안내 표시. */
-var EXTRACT_URL="https://script.google.com/a/macros/sparkpetkorea.com/s/AKfycbyjJm7_u8Ggls7PnLIHoxipc63bak0BUFbO6EaXtNJctr4-0rCO3eZbOgYXwzX52wUWFQ/exec";
+var EXTRACT_URL="";
 function go(i){document.querySelectorAll('.mi').forEach((m,k)=>m.classList.toggle('on',k===i));document.querySelectorAll('.page').forEach((p,k)=>p.classList.toggle('on',k===i));}
 function heat(core,tot){var a=Math.min(1,tot?(core/tot)/0.55:0);var t=Math.round(255-(255-233)*a),g=Math.round(255-(255-246)*a),b=Math.round(255-(255-238)*a);return 'rgb('+t+','+g+','+b+')';}
 function crmHeat(p){if(!p)return '#fff';var a=Math.min(1,p/0.5);return 'rgba(31,157,87,'+(0.06+a*0.22)+')';}
@@ -69,7 +71,7 @@ var D=null, PREVM=null;
 function render(d){D=d;
  document.getElementById('meta').innerHTML=`기간 <b>${d.meta.latest_period||''}</b> · 전체 <b>${fmt(d.meta.n)}</b>명<br>빌드 ${d.meta.built_at||''} · 스냅 ${d.meta.periods||d.matrix.length}회`;
  if(d.meta.sample){var b=document.getElementById('banner');b.style.display='block';b.textContent='⚠ 샘플 데이터(실데이터 아님). 시트→Apps Script 빌드 시 report_data.json 으로 대체.';}
- glossary(); matrixTab(); contribTab('day'); convTab();
+ glossary(); matrixTab(); contribTab('day'); convTab(); cohortTab();
 }
 
 /* ⓘ 용어집 */
@@ -100,7 +102,7 @@ function glossary(){
   + card("대표 카테고리 <span class='mini'>· 열축</span>","고객이 <b>가장 자주 산 카테고리</b>(주문수 1위).",{chips:CATS.map(function(c){return [c];})});
 
  var sec2=card("CRM 기여","매출 중 <b>CRM 발급 쿠폰</b>(crm_campaign_target)이 사용된 몫. 카테×기간 격자에서 ₩/비율.")
-  + card("전환 <span class='mini'>· 발송→7일</span>","발송 후 7일 내 결제. 속도로 구분.",{chips:[["≤3일","#1f7a45"],["≤5일","#5aa0c9"],["≤7일","#8a97a8"]]})
+  + card("전환 <span class='mini'>· 발송→7일</span>","발송 후 7일 내 결제. <b>구간별(비누적)</b> 속도로 구분 · 7일계=합.",{chips:[["0~3일","#1f7a45"],["4~5일","#5aa0c9"],["6~7일","#8a97a8"]]})
   + card("매출 3분류","전환 매출을 쿠폰 사용 형태로 분리.",{chips:[["쿠폰=캠페인쿠폰","#1f7a45"],["기여=다른쿠폰","#3b7bbf"],["비쿠폰=무쿠폰","#8a97a8"]]});
 
  var sec3=card("SKU 기준","crm_sku_map(sku→rep_sku, <b>units</b>=구성갯수) → crm_product(option_name) → 카테고리. 라인금액은 units 비중으로 rep_sku 배분. 보조표²에서 rep_sku 내 sku_code(단품·번들) TOP5.")
@@ -192,12 +194,14 @@ function skuCode(rep,name,el){
 
 /* ③ 발송 전환·기여 */
 function convTab(){
- var h='<div class="tile"><h2>발송 전환·기여 매출</h2><div class="d">≤3/≤5/≤7일 = 전환 명·금액. 객단가=전환매출/인원. 쿠폰=캠페인쿠폰 / 기여=다른쿠폰 / 비쿠폰=무쿠폰. 미전환=7일 초과.</div>';
- h+='<div class="wrapx"><table><tr><th>타깃</th><th class="num">발송</th><th class="num">≤3일(명/₩)</th><th class="num">≤5일(명/₩)</th><th class="num">≤7일(명/₩)</th><th class="num">객단가</th><th class="num">쿠폰</th><th class="num">기여</th><th class="num">비쿠폰</th><th class="num">미전환</th></tr>';
+ var h='<div class="tile"><h2>발송 전환·기여 매출</h2><div class="d">0~3 / 4~5 / 6~7일 = <b>구간별(비누적)</b> 전환 명·금액. 객단가=7일내 전환매출/전환인원. 쿠폰=캠페인쿠폰 / 기여=다른쿠폰 / 비쿠폰=무쿠폰. 미전환=7일 초과.</div>';
+ h+='<div class="wrapx"><table><tr><th>타깃</th><th class="num">발송</th><th class="num">0~3일(명/₩)</th><th class="num">4~5일(명/₩)</th><th class="num">6~7일(명/₩)</th><th class="num">7일계</th><th class="num">객단가</th><th class="num">쿠폰</th><th class="num">기여</th><th class="num">비쿠폰</th><th class="num">미전환</th></tr>';
  (D.conversion||[]).forEach(function(c){var aov=c.c7?Math.round(c.r7/c.c7):0;
+  var b3c=c.c3,b3r=c.r3, b5c=Math.max(0,c.c5-c.c3),b5r=Math.max(0,c.r5-c.r3), b7c=Math.max(0,c.c7-c.c5),b7r=Math.max(0,c.r7-c.r5);
   h+=`<tr><td class="rh">${c.campaign}</td><td class="num">${fmt(c.sent)}</td>`+
-   `<td class="num">${c.c3}<span class="amt"> / ${won(c.r3)}</span></td>`+
-   `<td class="num">${c.c5}<span class="amt"> / ${won(c.r5)}</span></td>`+
+   `<td class="num">${b3c}<span class="amt"> / ${won(b3r)}</span></td>`+
+   `<td class="num">${b5c}<span class="amt"> / ${won(b5r)}</span></td>`+
+   `<td class="num">${b7c}<span class="amt"> / ${won(b7r)}</span></td>`+
    `<td class="num"><b>${c.c7}</b><span class="amt"> / ${won(c.r7)}</span></td>`+
    `<td class="num">${won(aov)}</td>`+
    `<td class="num" style="color:#1f7a45;font-weight:700">${won(c.coupon_rev)}</td>`+
@@ -219,6 +223,32 @@ function convSku(cp,el){
  var h='<table><tr><th>순위</th><th>상품명</th><th>rep_sku</th><th>카테</th><th class="num">기여매출</th><th class="num">비율</th></tr>'+
   rows.map(r=>`<tr><td>${r.rnk}</td><td class="l">${r.name}</td><td>${r.rep_sku}</td><td>${r.cat}</td><td class="num">${won(r.rev)}</td><td class="num">${r.ratio}%</td></tr>`).join('')+'</table>';
  document.getElementById('convskuTbl').innerHTML=h;
+}
+
+/* ④ 코호트 리텐션 (첫구매월 × 경과개월 재구매율) */
+var COH_SCOPE=null;
+function cohortHeat(r){if(r==null)return '#fff';var a=Math.min(1,r/60);return 'rgba(31,157,87,'+(0.05+a*0.5)+')';}
+function cohortTab(scope){
+ var C=D.cohort, host=document.getElementById('p4');
+ if(!C||!C.scopes||!C.scopes.length){host.innerHTML='<div class="tile"><h2>코호트 · 첫구매·재구매</h2><div class="d">cohort 탭 데이터가 없습니다. <b>08_cohort.sql</b> 결과를 시트 <b>[cohort]</b> 탭에 붙여넣고 빌드하세요.</div></div>';return;}
+ COH_SCOPE=scope||COH_SCOPE||C.scopes[0];
+ if(C.scopes.indexOf(COH_SCOPE)<0)COH_SCOPE=C.scopes[0];
+ var rows=C.byScope[COH_SCOPE]||[], offs=C.offsets, sameCat=COH_SCOPE!=='전체';
+ var h='<div class="tile"><h2>코호트 리텐션 — 첫구매 → 재구매</h2>';
+ h+='<div class="d">행=첫구매 월(코호트) · 열=경과 개월(M0=첫구매) · 셀=재구매율%('+(sameCat?'<b>동일 카테고리</b> 재구매':'전체 재구매')+'). 색이 진할수록 높음 · M0=100% · 아래 작은 숫자=인원.</div>';
+ h+='<div class="btns">'+C.scopes.map(function(s){return '<span class="btn '+(s===COH_SCOPE?'on':'')+'" onclick="cohortTab(\''+s.replace(/'/g,"\\'")+'\')">'+s+'</span>';}).join('')+'</div>';
+ h+='<div class="wrapx"><table><tr><th>첫구매월</th><th class="num">코호트</th>'+offs.map(function(m){return '<th>M'+m+'</th>';}).join('')+'</tr>';
+ rows.forEach(function(row){
+  h+='<tr><td class="rh">'+row.month+'</td><td class="num">'+fmt(row.n)+'명</td>';
+  row.cells.forEach(function(cl){
+   if(cl==null){h+='<td style="background:#fafbfc"></td>';return;}
+   h+='<td class="num" title="'+fmt(cl.a)+'명 / '+fmt(row.n)+'명" style="background:'+cohortHeat(cl.r)+'">'+cl.r+'%<div class="mini">'+fmt(cl.a)+'</div></td>';
+  });
+  h+='</tr>';
+ });
+ h+='</table></div>';
+ h+='<div class="note">리텐션 = 각 경과월에 (재)구매한 인원 ÷ 코호트 첫구매자. 월-단위 재방문 기준(누적 아님). 최근 코호트일수록 경과월이 짧아 삼각형으로 채워집니다.</div></div>';
+ host.innerHTML=h;
 }
 
 /* FALLBACK (샘플·실 상품명) */
@@ -244,6 +274,9 @@ var FALLBACK={meta:{latest_period:"2026-09-14",n:37576,built_at:"2026-09-14 06:0
   {campaign:"20260914_첫구매후미재구매",sent:846,c3:41,r3:1230000,c5:68,r5:2040000,c7:88,r7:2640000,coupon_rev:2010000,contrib_rev:380000,noncoupon_rev:250000,fail:758}],
  conv_sku:{"20260914_RFM챔피언":[{rnk:1,rep_sku:"SP04987",name:"치킨S",cat:"허니콤츄",rev:4100000,ratio:42},{rnk:2,rep_sku:"SP06999",name:"유산균",cat:"영양제",rev:2300000,ratio:23},{rnk:3,rep_sku:"SP07244",name:"오랄겔(소)",cat:"덴탈라인업",rev:1400000,ratio:14}],
   "20260914_이탈위기충성":[{rnk:1,rep_sku:"SP11609",name:"치킨L",cat:"허니콤츄",rev:1200000,ratio:38},{rnk:2,rep_sku:"SP04987",name:"치킨S",cat:"허니콤츄",rev:800000,ratio:25}],
-  "20260914_첫구매후미재구매":[{rnk:1,rep_sku:"SP04987",name:"치킨S",cat:"허니콤츄",rev:1500000,ratio:57},{rnk:2,rep_sku:"SP06999",name:"유산균",cat:"영양제",rev:500000,ratio:19}]}};
+  "20260914_첫구매후미재구매":[{rnk:1,rep_sku:"SP04987",name:"치킨S",cat:"허니콤츄",rev:1500000,ratio:57},{rnk:2,rep_sku:"SP06999",name:"유산균",cat:"영양제",rev:500000,ratio:19}]},
+ cohort:(function(){var offs=[];for(var i=0;i<=12;i++)offs.push(i);
+  function mk(base,d0){var arr=[];for(var m=0;m<9;m++){var mm='2026-'+('0'+(m+1)).slice(-2);var n=Math.round(base*(0.8+0.05*m));var maxk=8-m;var cells=[];for(var k=0;k<=12;k++){if(k>maxk){cells.push(null);continue;}var r=k===0?100:Math.round(d0*Math.pow(0.72,k-1)*10)/10;cells.push({m:k,a:Math.round(n*r/100),r:r});}arr.push({month:mm,n:n,cells:cells});}return arr;}
+  return {offsets:offs,scopes:['전체','허니콤츄','영양제'],byScope:{'전체':mk(1200,34),'허니콤츄':mk(520,41),'영양제':mk(180,26)}};})()};
 fetch('report_data.json').then(r=>r.ok?r.json():Promise.reject()).then(render).catch(()=>render(FALLBACK));
 </script></body></html>
