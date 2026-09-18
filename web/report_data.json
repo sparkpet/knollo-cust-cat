@@ -1,13 +1,13 @@
 {
  "meta": {
-  "built_at": "2026-09-18 11:11",
-  "latest_period": "Fri Sep 18 2026 00:00:00 GMT+0900 (한국 표준시)",
+  "built_at": "2026-09-18 11:21",
+  "latest_period": "2026-09-18",
   "n": 41530,
   "periods": 1
  },
  "matrix": [
   {
-   "period": "Fri Sep 18 2026 00:00:00 GMT+0900 (한국 표준시)",
+   "period": "2026-09-18",
    "cells": [
     {
      "life": "최우수",
