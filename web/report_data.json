@@ -1,14 +1,331 @@
 {
  "meta": {
-  "built_at": "2026-09-17 18:52",
-  "latest_period": "",
-  "n": 0,
-  "periods": 0
+  "built_at": "2026-09-18 10:53",
+  "latest_period": "Fri Sep 18 2026 00:00:00 GMT+0900 (한국 표준시)",
+  "n": 41530,
+  "periods": 1
  },
- "matrix": [],
+ "matrix": [
+  {
+   "period": "Fri Sep 18 2026 00:00:00 GMT+0900 (한국 표준시)",
+   "cells": [
+    {
+     "life": "최우수",
+     "cats": [
+      {
+       "cat": "허니콤츄",
+       "core": 542,
+       "grow": 62,
+       "risk": 0,
+       "non": 0
+      },
+      {
+       "cat": "덴탈라인업",
+       "core": 55,
+       "grow": 2,
+       "risk": 0,
+       "non": 0
+      },
+      {
+       "cat": "영양제",
+       "core": 224,
+       "grow": 10,
+       "risk": 0,
+       "non": 0
+      },
+      {
+       "cat": "위생/패드",
+       "core": 89,
+       "grow": 13,
+       "risk": 0,
+       "non": 0
+      },
+      {
+       "cat": "산책용품",
+       "core": 0,
+       "grow": 0,
+       "risk": 0,
+       "non": 0
+      },
+      {
+       "cat": "간식",
+       "core": 471,
+       "grow": 11,
+       "risk": 0,
+       "non": 0
+      }
+     ]
+    },
+    {
+     "life": "우량",
+     "cats": [
+      {
+       "cat": "허니콤츄",
+       "core": 0,
+       "grow": 408,
+       "risk": 0,
+       "non": 340
+      },
+      {
+       "cat": "덴탈라인업",
+       "core": 0,
+       "grow": 63,
+       "risk": 0,
+       "non": 153
+      },
+      {
+       "cat": "영양제",
+       "core": 0,
+       "grow": 146,
+       "risk": 0,
+       "non": 139
+      },
+      {
+       "cat": "위생/패드",
+       "core": 0,
+       "grow": 82,
+       "risk": 0,
+       "non": 88
+      },
+      {
+       "cat": "산책용품",
+       "core": 0,
+       "grow": 3,
+       "risk": 0,
+       "non": 30
+      },
+      {
+       "cat": "간식",
+       "core": 0,
+       "grow": 306,
+       "risk": 0,
+       "non": 417
+      }
+     ]
+    },
+    {
+     "life": "신규",
+     "cats": [
+      {
+       "cat": "허니콤츄",
+       "core": 0,
+       "grow": 0,
+       "risk": 0,
+       "non": 638
+      },
+      {
+       "cat": "덴탈라인업",
+       "core": 0,
+       "grow": 0,
+       "risk": 0,
+       "non": 608
+      },
+      {
+       "cat": "영양제",
+       "core": 0,
+       "grow": 0,
+       "risk": 0,
+       "non": 424
+      },
+      {
+       "cat": "위생/패드",
+       "core": 0,
+       "grow": 0,
+       "risk": 0,
+       "non": 151
+      },
+      {
+       "cat": "산책용품",
+       "core": 0,
+       "grow": 0,
+       "risk": 0,
+       "non": 241
+      },
+      {
+       "cat": "간식",
+       "core": 0,
+       "grow": 0,
+       "risk": 0,
+       "non": 1038
+      }
+     ]
+    },
+    {
+     "life": "이탈징후",
+     "cats": [
+      {
+       "cat": "허니콤츄",
+       "core": 95,
+       "grow": 117,
+       "risk": 418,
+       "non": 0
+      },
+      {
+       "cat": "덴탈라인업",
+       "core": 13,
+       "grow": 27,
+       "risk": 64,
+       "non": 0
+      },
+      {
+       "cat": "영양제",
+       "core": 43,
+       "grow": 47,
+       "risk": 154,
+       "non": 0
+      },
+      {
+       "cat": "위생/패드",
+       "core": 24,
+       "grow": 24,
+       "risk": 79,
+       "non": 0
+      },
+      {
+       "cat": "산책용품",
+       "core": 0,
+       "grow": 1,
+       "risk": 2,
+       "non": 0
+      },
+      {
+       "cat": "간식",
+       "core": 77,
+       "grow": 81,
+       "risk": 276,
+       "non": 0
+      }
+     ]
+    },
+    {
+     "life": "관망",
+     "cats": [
+      {
+       "cat": "허니콤츄",
+       "core": 0,
+       "grow": 0,
+       "risk": 0,
+       "non": 1137
+      },
+      {
+       "cat": "덴탈라인업",
+       "core": 0,
+       "grow": 0,
+       "risk": 0,
+       "non": 992
+      },
+      {
+       "cat": "영양제",
+       "core": 0,
+       "grow": 0,
+       "risk": 0,
+       "non": 710
+      },
+      {
+       "cat": "위생/패드",
+       "core": 0,
+       "grow": 0,
+       "risk": 0,
+       "non": 553
+      },
+      {
+       "cat": "산책용품",
+       "core": 0,
+       "grow": 0,
+       "risk": 0,
+       "non": 154
+      },
+      {
+       "cat": "간식",
+       "core": 0,
+       "grow": 0,
+       "risk": 0,
+       "non": 1187
+      }
+     ]
+    },
+    {
+     "life": "이탈",
+     "cats": [
+      {
+       "cat": "허니콤츄",
+       "core": 0,
+       "grow": 0,
+       "risk": 1810,
+       "non": 9070
+      },
+      {
+       "cat": "덴탈라인업",
+       "core": 0,
+       "grow": 0,
+       "risk": 344,
+       "non": 5724
+      },
+      {
+       "cat": "영양제",
+       "core": 0,
+       "grow": 0,
+       "risk": 532,
+       "non": 3495
+      },
+      {
+       "cat": "위생/패드",
+       "core": 0,
+       "grow": 0,
+       "risk": 204,
+       "non": 1336
+      },
+      {
+       "cat": "산책용품",
+       "core": 0,
+       "grow": 0,
+       "risk": 6,
+       "non": 435
+      },
+      {
+       "cat": "간식",
+       "core": 0,
+       "grow": 0,
+       "risk": 892,
+       "non": 4653
+      }
+     ]
+    }
+   ]
+  }
+ ],
  "cat_contrib": [],
  "cat_top_sku": {},
  "cat_sku_code": {},
- "conversion": [],
+ "conversion": [
+  {
+   "campaign": "20260914_가입7_150일_미구매",
+   "sent": 3496,
+   "c3": 10,
+   "r3": 604680,
+   "c5": 10,
+   "r5": 604680,
+   "c7": 10,
+   "r7": 604680,
+   "coupon_rev": 336480,
+   "contrib_rev": 0,
+   "noncoupon_rev": 268200,
+   "fail": 3486
+  },
+  {
+   "campaign": "20260914_멀티핏_히든링크",
+   "sent": 234,
+   "c3": 2,
+   "r3": 79800,
+   "c5": 2,
+   "r5": 79800,
+   "c7": 2,
+   "r7": 79800,
+   "coupon_rev": 0,
+   "contrib_rev": 0,
+   "noncoupon_rev": 79800,
+   "fail": 232
+  }
+ ],
  "conv_sku": {}
 }
