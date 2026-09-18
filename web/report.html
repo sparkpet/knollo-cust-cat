@@ -60,7 +60,7 @@ var fmt=n=>Number(n||0).toLocaleString('ko-KR');
 var won=n=>fmt(Math.round(Number(n||0)))+'원';   // 전체 단위 표기 (예: 1,870,123원)
 var pct=(a,b)=>b?Math.round(a/b*1000)/10:0;
 /* ★ 인원 추출용 Apps Script 웹앱 URL (배포 후 여기에 입력). 비우면 안내 표시. */
-var EXTRACT_URL="https://script.google.com/a/macros/sparkpetkorea.com/s/AKfycbyjJm7_u8Ggls7PnLIHoxipc63bak0BUFbO6EaXtNJctr4-0rCO3eZbOgYXwzX52wUWFQ/exec";
+var EXTRACT_URL = "https://script.google.com/a/macros/sparkpetkorea.com/s/AKfycbyjJm7_u8Ggls7PnLIHoxipc63bak0BUFbO6EaXtNJctr4-0rCO3eZbOgYXwzX52wUWFQ/exec";
 function go(i){document.querySelectorAll('.mi').forEach((m,k)=>m.classList.toggle('on',k===i));document.querySelectorAll('.page').forEach((p,k)=>p.classList.toggle('on',k===i));}
 function heat(core,tot){var a=Math.min(1,tot?(core/tot)/0.55:0);var t=Math.round(255-(255-233)*a),g=Math.round(255-(255-246)*a),b=Math.round(255-(255-238)*a);return 'rgb('+t+','+g+','+b+')';}
 function crmHeat(p){if(!p)return '#fff';var a=Math.min(1,p/0.5);return 'rgba(31,157,87,'+(0.06+a*0.22)+')';}
