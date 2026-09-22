@@ -23,8 +23,13 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}td.l{text-align
 .m1 td.cell{cursor:pointer}.m1 td.cell:hover{outline:2px solid var(--brand);outline-offset:-2px}
 .cell2{text-align:right}.rev{font-weight:800;font-size:11.3px}.contrib{font-size:9px;color:#5b6b82}.tot{color:#4b3fc0;font-weight:800}
 .prow{cursor:pointer}.prow:hover td.rh{background:#eef7f0}.prow.on td{outline:1px solid rgba(31,157,87,.45);outline-offset:-1px}.prow.on td.rh{box-shadow:inset 3px 0 0 var(--brand);background:#eaf7ef}
-.scrolly{max-height:460px;overflow:auto}.scrolly th{position:sticky;top:0;z-index:2}
+.scrolly{max-height:460px;overflow:auto}.scrolly th{position:sticky;top:0;z-index:4}
 #cohHeat td,#cohHeat th{white-space:nowrap}#cohHeat td .mini{white-space:nowrap}
+.cohc0{position:sticky;left:0;z-index:3;background:#f8fafc;min-width:78px}
+.cohc1{position:sticky;left:78px;z-index:3;background:#fff;min-width:62px}
+.cohcR{position:sticky;right:0;z-index:3;background:#fff;box-shadow:-6px 0 8px -6px rgba(20,30,50,.18)}
+.cohc1{box-shadow:6px 0 8px -6px rgba(20,30,50,.12)}
+#cohHeat th.cohc0,#cohHeat th.cohc1,#cohHeat th.cohcR{z-index:6;background:#f4f7fa}
 .btns{display:inline-flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
 .btn{font-size:11px;font-weight:700;border:1px solid #d7deea;background:#fff;color:#5b6b82;border-radius:8px;padding:4px 12px;cursor:pointer}.btn.on{background:var(--brand);color:#fff;border-color:var(--brand)}
 .xbrow{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px}.xb{white-space:nowrap;border-color:#bfe0cd;color:#1f7a45}.xb:hover{background:#eaf7ef}
@@ -90,32 +95,47 @@ function glossary(){
      rows.map(function(r){return `<tr><td style="text-align:left"><span class="chip" style="background:${r[1]};color:${lum(r[1])<0.62?'#fff':'#2c3a4a'}">${r[0]}</span></td><td style="text-align:left" class="x">${r[2]}</td></tr>`;}).join('')+
      `</table></div>`;
  }
- var lifeTbl=deftbl("라이프사이클 <span class='mini'>· 행축</span>","구매 <b>최근성 × 빈도</b>. 고객당 1개(배타).","단계",[
-   ["최우수",LC["최우수"],"최근성 ≤60일 · 주문 5회+"],
-   ["우량",LC["우량"],"≤60일 · 2~4회"],
-   ["신규",LC["신규"],"≤60일 · 1회"],
-   ["이탈징후",LC["이탈징후"],"61~150일 · 3회+"],
-   ["관망",LC["관망"],"61~150일 · ≤2회"],
-   ["이탈",LC["이탈"],">150일"]]);
- var loyTbl=deftbl("브랜드 충성 등급 <span class='mini'>· 셀 안</span>","라이프사이클과 <b>독립</b>. <b>빈도 × 카테폭</b>만 사용(최근성 미포함) → 모든 단계에서 4등급이 나타남.","등급",[
-   ["코어",GC[0],"주문 5회+ · 카테 2개+ (깊고 넓은 반복)"],
-   ["성장",GC[1],"주문 3회+ (반복 형성)"],
-   ["관계형성",GC[2],"주문 2회 (첫 재구매)"],
-   ["비충성",GC[3],"주문 1회 (단발)"]]);
+ var lifeTbl=deftbl("라이프사이클 <span class='mini'>· 행축</span>","<b>최근성</b>(마지막 결제일로부터 오늘까지 지난 일수) × <b>빈도</b>(주문 건수 = 생성된 주문번호 개수)로 나눕니다. 고객당 <b>1개만</b> 배정(겹치지 않음).","단계",[
+   ["최우수",LC["최우수"],"마지막 구매 <b>60일 이내</b> · 주문 <b>5건 이상</b>"],
+   ["우량",LC["우량"],"마지막 구매 60일 이내 · 주문 <b>2~4건</b>"],
+   ["신규",LC["신규"],"마지막 구매 60일 이내 · 주문 <b>1건</b>(첫 구매)"],
+   ["이탈징후",LC["이탈징후"],"마지막 구매 <b>61~150일</b> · 주문 <b>3건 이상</b>(잘 사던 고객이 뜸해짐)"],
+   ["관망",LC["관망"],"마지막 구매 61~150일 · 주문 <b>1~2건</b>"],
+   ["이탈",LC["이탈"],"마지막 구매 <b>150일 초과</b>(최근 구매 없음)"]]);
+ var loyTbl=deftbl("브랜드 충성 등급 <span class='mini'>· 셀 안</span>","<b>최근성과 무관</b>하게 ‘얼마나 자주(주문 건수) · 얼마나 넓게(<b>서로 다른 상품 카테고리 수</b>) 샀나’로만 판단. 위에서부터 <b>먼저 만족하는 등급</b>으로 배정합니다.","등급",[
+   ["코어",GC[0],"주문 <b>5건 이상</b> <b>그리고</b> 서로 다른 카테고리 <b>2종 이상</b>(예: 간식+영양제) — <b>둘 다</b> 충족. 5건+라도 한 카테만 샀으면 ‘성장’."],
+   ["성장",GC[1],"주문 <b>3건 이상</b>(코어 조건 미충족 · <b>카테고리 수 무관</b>)"],
+   ["관계형성",GC[2],"주문 <b>정확히 2건</b> — 첫 재구매(<b>카테고리 수 무관</b>)"],
+   ["비충성",GC[3],"주문 <b>1건</b> — 단발(<b>카테고리 수 무관</b>)"]]);
+ var intro=card("이 리포트는 무엇인가요?","고객을 <b>구매 패턴</b>으로 나눠 보고(①), 무엇이 <b>매출·CRM</b>에 기여하는지(②③), <b>재구매·LTV·목표 달성</b>까지(④) 한 곳에서 봅니다. 위 메뉴를 <b>①②③④ 순서</b>로 읽으면 됩니다. 모든 매출은 <b>결제완료·회원</b> 기준, 금액 단위는 원(₩)입니다.");
+
  var sec1=lifeTbl+loyTbl
-  + card("대표 카테고리 <span class='mini'>· 열축</span>","고객이 <b>가장 자주 산 카테고리</b>(주문수 1위).",{chips:CATS.map(function(c){return [c];})});
+  + card("대표 카테고리 <span class='mini'>· 열축</span>","그 고객이 <b>가장 자주 산 카테고리</b>(주문 수 1위). ‘어떤 상품군 사람인지’로 고객을 나눕니다.",{chips:CATS.map(function(c){return [c];})})
+  + card("지형도 한 칸 읽는 법","한 칸 = (라이프사이클 × 대표카테) 고객 묶음. 큰 숫자=<b>총 인원</b>, 4색 막대=충성등급 비율(코·성·관·비), 배경이 진할수록 <b>코어 비중</b>이 높음. 칸을 <b>클릭</b>하면 등급별 인원과 <b>인원 추출</b>이 열립니다.");
 
- var sec2=card("CRM 기여","매출 중 <b>CRM 발급 쿠폰</b>(crm_campaign_target)이 사용된 몫. 카테×기간 격자에서 ₩/비율.")
-  + card("전환 <span class='mini'>· 발송→7일</span>","발송 후 7일 내 결제. <b>구간별(비누적)</b> 속도로 구분 · 7일계=합.",{chips:[["0~3일","#1f7a45"],["4~5일","#5aa0c9"],["6~7일","#8a97a8"]]})
-  + card("매출 3분류","전환 매출을 쿠폰 사용 형태로 분리.",{chips:[["쿠폰=캠페인쿠폰","#1f7a45"],["기여=다른쿠폰","#3b7bbf"],["비쿠폰=무쿠폰","#8a97a8"]]});
+ var sec2=card("② 카테고리 매출·CRM 기여","일/주/월 버튼으로 기간을 바꿔 카테고리별 <b>실매출</b>과 그중 <b>CRM 기여</b>를 봅니다. 표의 <b>행을 클릭</b>하면 아래 보조표가 그 기간의 카테 TOP5 상품·판매코드로 갱신됩니다.")
+  + card("CRM 기여란?","매출 중 <b>우리가 보낸 캠페인 쿠폰</b>이 사용된 금액. ‘마케팅이 직접 밀어준 매출’의 근사치입니다.")
+  + card("③ 전환 <span class='mini'>· 발송 후 결제</span>","캠페인 발송 뒤 <b>구간별(겹치지 않게)</b> 결제한 인원·금액. 0~3일=즉시 반응, 4~5·6~7일=지연 반응, 7일계=합, <b>미전환</b>=7일 안에 결제 없음.",{chips:[["0~3일","#1f7a45"],["4~5일","#5aa0c9"],["6~7일","#8a97a8"]]})
+  + card("전환 매출 3분류","전환 매출을 쿠폰 사용 형태로 나눕니다.",{chips:[["쿠폰=캠페인쿠폰","#1f7a45"],["기여=다른쿠폰","#3b7bbf"],["비쿠폰=무쿠폰","#8a97a8"]]});
 
- var sec3=card("SKU 기준","crm_sku_map(sku→rep_sku, <b>units</b>=구성갯수) → crm_product(option_name) → 카테고리. 라인금액은 units 비중으로 rep_sku 배분. 보조표²에서 rep_sku 내 sku_code(단품·번들) TOP5.")
-  + card("인원 추출 <span class='mini'>· PII</span>","유형 지형도 셀 클릭 → <b>인원 추출</b> → Apps Script 웹앱이 customers_pii 탭 필터 → <b>새 구글시트 생성</b>(연락처 포함·마스킹 없음). PII는 구글 인증 안에만, 공개 리포트/GitHub 미저장.",{color:"#e07b39"});
+ var sec4=card("④ ‘코호트’란?","같은 <b>‘첫 구매 월’</b>에 처음 산 고객 묶음이 코호트입니다. 표의 <b>행=첫구매월</b>, <b>열 M0·M1·…=경과 개월</b>(M0=첫 달). 오래된 코호트일수록 오른쪽으로 길게 채워집니다.")
+  + card("재구매율 · 매출 · 1인 누적 LTV","상단 토글로 셀 값이 바뀝니다. <b>재구매율</b>=그 경과월에 다시 산 인원 비율(M0=100%). <b>매출</b>=그 경과월에 낸 실매출. <b>1인 누적 LTV</b>=(첫 달~그 달 누적매출) ÷ 첫구매자 = 고객 1명이 지금까지 낸 금액.")
+  + card("우측 ‘M3’ 열과 vs평균","오래된 코호트는 무조건 커 보여서, <b>모두 같은 성숙도(M3·M6·M12)</b> 시점 값으로 공정 비교합니다. <b>vs평균</b> = 그 시점 <b>코호트들의 평균</b> 대비(인원 가중 아님) · ▲=평균보다 좋음. 그 시점에 아직 도달 못 한 최근 코호트는 —.")
+  + card("카테고리별 1인 누적 LTV","획득 고객 1인당 지금까지 낸 매출(카테 총매출 ÷ 첫구매자). 어느 카테고리가 <b>반복 구매 경제성</b>이 좋은지 비교합니다.")
+  + card("월 매출 브리지 · 목표 역산","이번 달 예상 매출을 <b>기존 유지 + 신규</b>로 나눠 목표와 비교. <b>기존 유지</b>=기존 고객 재구매 매출(최근 3개월 평균), <b>신규</b>=첫구매 매출(최근 3개월 평균), 둘의 합이 <b>‘정상 페이스’ 기대</b>. <b style='color:#3b7bbf'>파란선</b>=이번 달 실제, <b>검은선</b>=목표. 부족분(갭)을 ‘신규 몇 명’ 또는 ‘유지 몇 %’로 역산합니다.")
+  + card("SKU 첫구매 vs 재구매 <span class='mini'>· 주차</span>","상품(rep_sku)의 그 주 매출을 <b>첫구매(파랑)</b>·<b>재구매(초록)</b>로 쪼갬. 기준 = <b>그 상품을 처음 산 주문=첫구매, 이후=재구매</b>(전체 이력 기준). 재구매 비중이 크고 오르는 라인이 안정 매출축입니다.");
 
- var h='<div class="tile"><h2>용어·정의</h2><div class="d">이 리포트가 쓰는 축·등급·지표 정의.</div>'+
-   '<div class="glsec"><div class="st">▪ 분류 축 (누구를 어떻게 나누나)</div><div class="glgrid">'+sec1+'</div></div>'+
-   '<div class="glsec"><div class="st">▪ 매출·전환 지표</div><div class="glgrid">'+sec2+'</div></div>'+
-   '<div class="glsec"><div class="st">▪ 데이터·운영</div><div class="glgrid">'+sec3+'</div></div>'+
+ var sec5=card("데이터 기준","모든 지표는 <b>결제완료(paid) · 회원(비회원 제외) · 2024-01-01 이후</b> 주문 기준. 카테 매출은 번들이면 <b>구성 수량(units) 비중</b>으로 상품에 나눠 배분합니다.")
+  + card("주(週) 기준","주차는 <b>월요일 시작</b>. ⑦·②주별의 날짜 라벨은 그 <b>주의 월요일</b>을 뜻합니다(하루가 아니라 한 주 합계).")
+  + card("인원 추출 <span class='mini'>· 개인정보</span>","지형도 칸 클릭 → 인원 추출 → 연락처 포함 명단이 <b>내 구글드라이브에 새 시트</b>로 생성됩니다. 개인정보는 구글 로그인 안에서만 열리고 <b>공개 리포트·GitHub엔 저장되지 않습니다.</b>",{color:"#e07b39"})
+  + card("어떻게 갱신되나","MySQL 집계 → 구글시트 붙여넣기 → Apps Script가 데이터 파일 빌드 → GitHub Pages 자동 게시. 시트만 갱신하면 리포트가 최신화됩니다.");
+
+ var h='<div class="tile"><h2>용어·정의 <span class="mini">— 처음 보셔도 이해되도록</span></h2><div class="d">메뉴를 ①②③④ 순서로 읽으면 됩니다.</div>'+
+   '<div class="glsec"><div class="st">▪ 시작하기</div><div class="glgrid">'+intro+'</div></div>'+
+   '<div class="glsec"><div class="st">▪ ① 유형 지형도 — 고객을 어떻게 나누나</div><div class="glgrid">'+sec1+'</div></div>'+
+   '<div class="glsec"><div class="st">▪ ②③ 매출 · CRM · 전환</div><div class="glgrid">'+sec2+'</div></div>'+
+   '<div class="glsec"><div class="st">▪ ④ 코호트 · 목표 달성 · SKU</div><div class="glgrid">'+sec4+'</div></div>'+
+   '<div class="glsec"><div class="st">▪ 데이터 · 운영</div><div class="glgrid">'+sec5+'</div></div>'+
   '</div>';
  document.getElementById('p0').innerHTML=h;
 }
@@ -292,9 +312,9 @@ function renderCohHeat(){
  var avgH=mat.length?mat.reduce(function(a,b){return a+b;},0)/mat.length:0;
  var basis=mode==='ret'?'셀 = 재구매율 %(인원 기준) · M0=100%':(mode==='rev'?'셀 = 그 경과월 <b>실매출</b>(units 비중 배분) · 표기 단위 <b>억원</b>':'셀 = <b>1인 누적 LTV</b> = (M0~해당월 누적매출) ÷ 코호트 첫구매자 · 표기 단위 <b>원</b>');
  var hcol='M'+H+(mode==='ret'?' 재구매율':' LTV');
- var h='<div class="mini" style="margin:2px 0 6px;color:#41505f">'+basis+'</div><div class="wrapx scrolly"><table><tr><th>첫구매월</th><th class="num">코호트</th>'+offs.map(function(k){return '<th>M'+k+'</th>';}).join('')+'<th>'+hcol+'</th></tr>';
+ var h='<div class="mini" style="margin:2px 0 6px;color:#41505f">'+basis+'</div><div class="wrapx scrolly"><table><tr><th class="cohc0">첫구매월</th><th class="num cohc1">코호트</th>'+offs.map(function(k){return '<th>M'+k+'</th>';}).join('')+'<th class="cohcR">'+hcol+'</th></tr>';
  rows.forEach(function(row,ri){
-  h+='<tr><td class="rh">'+row.month+'</td><td class="num" style="color:#6a7789">'+fmt(row.n)+'명</td>';
+  h+='<tr><td class="rh cohc0">'+row.month+'</td><td class="num cohc1" style="color:#6a7789">'+fmt(row.n)+'명</td>';
   offs.forEach(function(k){var c=row.cells[k];if(c==null){h+='<td style="background:#fafbfc"></td>';return;}
    var disp,t;
    if(mode==='ret'){disp=c.r+'%';t=c.r/100;}
@@ -302,9 +322,9 @@ function renderCohHeat(){
    else{var l=cumLtv(row,k);disp=won(l);t=maxL?l/maxL:0;}
    h+='<td class="num" style="background:'+tealHeat(t)+'">'+disp+'</td>';});
   var v=vs[ri];
-  if(v==null){h+='<td class="mini" style="color:#8a97a8">—</td></tr>';}
+  if(v==null){h+='<td class="mini cohcR" style="color:#8a97a8">—</td></tr>';}
   else{var pc=avgH?Math.round((v-avgH)/avgH*100):0, col=pc>=0?'#1f8a5b':'#c0392b';
-   h+='<td class="num"><b>'+(mode==='ret'?v+'%':won(v))+'</b><div class="mini" style="color:'+col+'">'+(pc>=0?'▲':'▼')+Math.abs(pc)+'% vs평균</div></td></tr>';}
+   h+='<td class="num cohcR"><b>'+(mode==='ret'?v+'%':won(v))+'</b><div class="mini" style="color:'+col+'">'+(pc>=0?'▲':'▼')+Math.abs(pc)+'% vs평균</div></td></tr>';}
  });
  h+='</table></div><div class="mini" style="margin-top:5px">우측 열 = <b>M'+H+' 시점</b>의 '+(mode==='ret'?'재구매율':'1인 누적 LTV')+' — <b>같은 성숙도(M'+H+')</b>로 코호트를 공정 비교. 아래 ▲/▼ = 그 시점 코호트 평균 대비. M'+H+' 미도달 코호트는 —.</div>';
  box.innerHTML=h;
@@ -395,6 +415,9 @@ function renderFr(){
   wkAsc.forEach(function(w){var f=0,rp=0;fr.forEach(function(r){if(r.week===w&&r.cat===FR_CAT&&r.rep===o.rep){f+=r.frev;rp+=r.rrev;}});var s=(f+rp)?rp/(f+rp):0;sp+='<i style="display:inline-block;width:4px;height:'+Math.max(1,Math.round(s*16))+'px;background:#1f9d57;border-radius:1px"></i>';});
   h+='<tr><td class="l">'+o.nm+' <span class="mini">'+o.rep+'</span></td><td class="num">'+won(o.tot)+'</td><td class="num" style="color:#185FA5">'+won(o.f)+'</td><td class="num" style="color:#0F6E56">'+won(o.rp)+'</td><td class="num" style="font-weight:700">'+Math.round(o.sh*100)+'%</td><td style="color:'+dr[1]+'">'+dr[0]+'</td><td><span style="display:inline-flex;align-items:flex-end;gap:2px;height:16px">'+sp+'</span></td></tr>';
  });
+ var tf=list.reduce(function(a,o){a.tot+=o.tot;a.f+=o.f;a.rp+=o.rp;return a;},{tot:0,f:0,rp:0});
+ var tsh=tf.tot?tf.rp/tf.tot:0;
+ h+='<tr style="border-top:2px solid #c7d0dd;background:#f8fafc;font-weight:800"><td class="l">합계 <span class="mini">('+list.length+'개 SKU · 이 주 '+FR_CAT+')</span></td><td class="num">'+won(tf.tot)+'</td><td class="num" style="color:#185FA5">'+won(tf.f)+'</td><td class="num" style="color:#0F6E56">'+won(tf.rp)+'</td><td class="num">'+Math.round(tsh*100)+'%</td><td></td><td></td></tr>';
  h+='</table></div>';
  box.innerHTML=h;
 }
