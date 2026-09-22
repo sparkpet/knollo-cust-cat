@@ -123,11 +123,11 @@ function glossary(){
 function matrixTab(){
  var cur=D.matrix[D.matrix.length-1], prev=D.matrix.length>1?D.matrix[D.matrix.length-2]:null;
  function cellOf(m,L,C){var lc=m.cells.find(x=>x.life===L);return lc?lc.cats.find(x=>x.cat===C):null;}
- var h='<div class="tile"><h2>유형 지형도 — 라이프사이클 × 카테고리</h2><div class="d">셀 = 총원 + 4색 비율 바 + 등급 요약(코·성·위·비). 배경=코어 비중. 셀 클릭 → 등급 브레이크다운.</div>';
+ var h='<div class="tile"><h2>유형 지형도 — 라이프사이클 × 카테고리</h2><div class="d">셀 = 총원 + 4색 비율 바 + 등급 요약(코·성·관·비). 배경=코어 비중. 셀 클릭 → 등급 브레이크다운.</div>';
  h+='<table class="m1"><tr><th>라이프 \\ 카테</th>'+CATS.map(c=>`<th>${c}</th>`).join('')+'</tr>';
  LIFE.forEach(function(L){h+=`<tr><td class="rh">${L}</td>`;CATS.forEach(function(C){var x=cellOf(cur,L,C)||{core:0,grow:0,risk:0,non:0};var tot=x.core+x.grow+x.risk+x.non;var v=[x.core,x.grow,x.risk,x.non];
   var bar=v.map((n,i)=>`<i style="width:${tot?n/tot*100:0}%;background:${GC[i]}"></i>`).join('');
-  h+=`<td class="cell" style="background:${heat(x.core,tot)}" onclick="drill('${L}','${C}')"><div class="n">${fmt(tot)}<span style="font-weight:600;font-size:9px;color:#6a7789"> 명</span></div><div class="bar4">${bar}</div><div class="mini">코${x.core} 성${x.grow} 위${x.risk} 비${x.non}</div></td>`;});h+='</tr>';});
+  h+=`<td class="cell" style="background:${heat(x.core,tot)}" onclick="drill('${L}','${C}')"><div class="n">${fmt(tot)}<span style="font-weight:600;font-size:9px;color:#6a7789"> 명</span></div><div class="bar4">${bar}</div><div class="mini">코${x.core} 성${x.grow} 관${x.risk} 비${x.non}</div></td>`;});h+='</tr>';});
  h+='</table><div class="leg">'+GN.map((g,i)=>`<span><i style="background:${GC[i]}"></i>${g}</span>`).join('')+'</div>';
  h+='<div class="drill" id="drill"></div></div>';
  document.getElementById('p1').innerHTML=h;
@@ -246,31 +246,137 @@ function convSku(cp,el){
  document.getElementById('convskuTbl').innerHTML=h;
 }
 
-/* ④ 코호트 리텐션 (첫구매월 × 경과개월 재구매율) */
-var COH_SCOPE=null;
-function cohortHeat(r){if(r==null)return '#fff';var a=Math.min(1,r/60);return 'rgba(31,157,87,'+(0.05+a*0.5)+')';}
+/* ④ 코호트 — 매출·LTV(①⑤) · 카테고리 LTV(⑥) · 브리지·역산(②③) · SKU 첫/재(⑦) */
+var COH_SCOPE=null, COH_MODE='ret', FR_CAT=null, FR_WEEK=null, GOAL=null;
+var _bridge={keep:0,newv:0,firstAOV:45000,exp:0};
+function eok(m){return (Math.round(Number(m||0)/1e6)/100).toFixed(2)+'억';}
+function addM(ymk,k){var p=String(ymk).split('-');var d=new Date(Date.UTC(+p[0],+p[1]-1+k,1));return d.getUTCFullYear()+'-'+('0'+(d.getUTCMonth()+1)).slice(-2);}
+function tealHeat(t){t=Math.max(0,Math.min(1,t||0));return 'rgba(31,157,87,'+(0.05+t*0.5)+')';}
+function markBtns(id,val){var el=document.getElementById(id);if(!el)return;el.querySelectorAll('.btn').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-v')===val);});}
 function cohortTab(scope){
- var C=D.cohort, host=document.getElementById('p4');
- if(!C||!C.scopes||!C.scopes.length){host.innerHTML='<div class="tile"><h2>코호트 · 첫구매·재구매</h2><div class="d">cohort 탭 데이터가 없습니다. <b>08_cohort.sql</b> 결과를 시트 <b>[cohort]</b> 탭에 붙여넣고 빌드하세요.</div></div>';return;}
- COH_SCOPE=scope||COH_SCOPE||C.scopes[0];
- if(C.scopes.indexOf(COH_SCOPE)<0)COH_SCOPE=C.scopes[0];
- var rows=C.byScope[COH_SCOPE]||[], offs=C.offsets, sameCat=COH_SCOPE!=='전체';
- var h='<div class="tile"><h2>코호트 리텐션 — 첫구매 → 재구매</h2>';
- h+='<div class="d">행=첫구매 월(코호트) · 열=경과 개월(M0=첫구매) · 셀=재구매율%('+(sameCat?'<b>동일 카테고리</b> 재구매':'전체 재구매')+'). 색이 진할수록 높음 · M0=100% · 아래 작은 숫자=인원.</div>';
- h+='<div class="btns">'+C.scopes.map(function(s){return '<span class="btn '+(s===COH_SCOPE?'on':'')+'" onclick="cohortTab(\''+s.replace(/'/g,"\\'")+'\')">'+s+'</span>';}).join('')+'</div>';
- h+='<div class="wrapx"><table><tr><th>첫구매월</th><th class="num">코호트</th>'+offs.map(function(m){return '<th>M'+m+'</th>';}).join('')+'</tr>';
- rows.forEach(function(row){
-  h+='<tr><td class="rh">'+row.month+'</td><td class="num">'+fmt(row.n)+'명</td>';
-  row.cells.forEach(function(cl){
-   if(cl==null){h+='<td style="background:#fafbfc"></td>';return;}
-   h+='<td class="num" title="'+fmt(cl.a)+'명 / '+fmt(row.n)+'명" style="background:'+cohortHeat(cl.r)+'">'+cl.r+'%<div class="mini">'+fmt(cl.a)+'</div></td>';
-  });
-  h+='</tr>';
+ if(scope)COH_SCOPE=scope;
+ var host=document.getElementById('p4');
+ var hasR=D.cohort&&D.cohort.scopes&&D.cohort.scopes.length, hasV=D.cohort_rev&&D.cohort_rev.scopes&&D.cohort_rev.scopes.length;
+ if(!hasR&&!hasV){host.innerHTML='<div class="tile"><h2>코호트</h2><div class="d"><b>cohort</b> / <b>cohort_rev</b> 탭 데이터가 없습니다. 08·08b 결과를 붙여넣고 빌드하세요.</div></div>';return;}
+ var scopes=hasV?D.cohort_rev.scopes:D.cohort.scopes;
+ if(!COH_SCOPE||scopes.indexOf(COH_SCOPE)<0)COH_SCOPE=scopes[0];
+ var h='';
+ h+='<div class="tile"><h2>① 코호트 — 첫구매 → 재구매 · 매출·LTV</h2>';
+ h+='<div class="d">행=첫구매월 · 열=경과 개월 · 우측 <b>vs평균</b>=코호트 성과(⑤ ▲앞섬/▼뒤처짐).</div>';
+ h+='<div class="btns" id="cohScope">'+scopes.map(function(s){return '<span class="btn '+(s===COH_SCOPE?'on':'')+'" data-v="'+s+'" onclick="cohScopeSel(\''+s.replace(/'/g,"\\'")+'\')">'+s+'</span>';}).join('')+'</div> ';
+ h+='<div class="btns" id="cohMode">'+[['ret','재구매율'],['rev','매출'],['ltv','1인 누적 LTV']].map(function(m){return '<span class="btn '+(m[0]===COH_MODE?'on':'')+'" data-v="'+m[0]+'" onclick="cohModeSel(\''+m[0]+'\')">'+m[1]+'</span>';}).join('')+'</div>';
+ h+='<div id="cohHeat"></div></div>';
+ h+='<div class="tile"><h2>⑥ 카테고리별 1인 누적 LTV</h2><div class="d">획득 고객 1인당 지금까지 낸 매출(카테 총매출 ÷ 첫구매자).</div><div id="cohCat"></div></div>';
+ h+='<div class="tile"><h2>②③ 월 매출 브리지 · 목표 역산</h2><div class="d">기존 유지 + 신규 vs 목표. 갭을 신규 획득 또는 유지 상승으로 역산.</div><div id="bridgeBox"></div></div>';
+ h+='<div class="tile"><h2>⑦ SKU 라인 · 첫구매 vs 재구매 (주차)</h2><div class="d">SKU 라인 관점(B): 그 rep_sku 첫 구매=첫구매, 이후=재구매. 재구매 기여가 근거.</div><div id="frBox"></div></div>';
+ host.innerHTML=h;
+ renderCohHeat(); renderCohCat(); renderBridge(); renderFr();
+}
+function cohScopeSel(s){COH_SCOPE=s;markBtns('cohScope',s);renderCohHeat();}
+function cohModeSel(m){COH_MODE=m;markBtns('cohMode',m);renderCohHeat();}
+function renderCohHeat(){
+ var mode=COH_MODE, box=document.getElementById('cohHeat'); if(!box)return;
+ var src=mode==='ret'?D.cohort:D.cohort_rev;
+ if(!src||!src.byScope[COH_SCOPE]){box.innerHTML='<div class="mini" style="padding:6px 0">이 모드 데이터 없음('+(mode==='ret'?'cohort':'cohort_rev')+' 탭 필요)</div>';return;}
+ var rows=src.byScope[COH_SCOPE], offs=src.offsets;
+ function cumLtv(row,k){var s=0,any=false;for(var j=0;j<=k;j++){var v=row.cells[j];if(v==null)continue;any=true;s+=v;}return any?s/(row.n||1):null;}
+ var maxV=0,maxL=0;
+ rows.forEach(function(row){offs.forEach(function(k){var c=row.cells[k];if(c!=null&&mode!=='ret')maxV=Math.max(maxV,c);var l=cumLtv(row,k);if(l!=null)maxL=Math.max(maxL,l);});});
+ var perf=rows.map(function(row){if(mode==='ret'){var a=0,c=0;offs.forEach(function(k){if(k>=1&&row.cells[k]!=null){a+=row.cells[k].r;c++;}});return c?a/c:0;}for(var k=offs.length-1;k>=0;k--){var l=cumLtv(row,k);if(l!=null)return l;}return 0;});
+ var avg=perf.reduce(function(a,b){return a+b;},0)/(perf.length||1);
+ var h='<div class="wrapx scrolly"><table><tr><th>첫구매월</th><th class="num">코호트</th>'+offs.map(function(k){return '<th>M'+k+'</th>';}).join('')+'<th>vs평균</th></tr>';
+ rows.forEach(function(row,ri){
+  h+='<tr><td class="rh">'+row.month+'</td><td class="num" style="color:#6a7789">'+fmt(row.n)+'명</td>';
+  offs.forEach(function(k){var c=row.cells[k];if(c==null){h+='<td style="background:#fafbfc"></td>';return;}
+   var disp,t;
+   if(mode==='ret'){disp=c.r+'%';t=c.r/100;}
+   else if(mode==='rev'){disp=eok(c);t=maxV?c/maxV:0;}
+   else{var l=cumLtv(row,k);disp=won(l);t=maxL?l/maxL:0;}
+   h+='<td class="num" style="background:'+tealHeat(t)+'">'+disp+'</td>';});
+  var d=perf[ri]-avg, pc=avg?Math.round(d/avg*100):0, col=pc>=0?'#1f8a5b':'#c0392b';
+  h+='<td class="num" style="color:'+col+';font-weight:700">'+(pc>=0?'▲':'▼')+Math.abs(pc)+'%</td></tr>';
+ });
+ h+='</table></div><div class="mini" style="margin-top:5px">재구매율=인원 기준(cohort) · 매출/LTV=cohort_rev · vs평균='+(mode==='ret'?'M1+ 평균 재구매율':'1인 누적 LTV')+' 대비.</div>';
+ box.innerHTML=h;
+}
+function renderCohCat(){
+ var box=document.getElementById('cohCat'); if(!box)return;
+ var cr=D.cohort_rev; if(!cr||!cr.scopes.length){box.innerHTML='<div class="mini">cohort_rev 탭 필요</div>';return;}
+ var list=cr.scopes.filter(function(s){return s!=='전체';}).map(function(cat){var rows=cr.byScope[cat]||[],tot=0,nn=0;rows.forEach(function(row){nn+=row.n;row.cells.forEach(function(v){if(v!=null)tot+=v;});});return {cat:cat,ltv:nn?tot/nn:0};}).sort(function(a,b){return b.ltv-a.ltv;});
+ var mx=Math.max.apply(null,list.map(function(x){return x.ltv;}))||1;
+ box.innerHTML=list.map(function(x){return '<div style="display:flex;align-items:center;gap:10px;margin:5px 0"><span style="width:80px;font-size:11px;color:#5b6b82">'+x.cat+'</span><div style="flex:1;height:15px;background:#f4f7fa;border-radius:4px;overflow:hidden"><div style="height:100%;width:'+(x.ltv/mx*100)+'%;background:#1f9d57"></div></div><span class="num" style="width:92px;text-align:right;font-size:11px">'+won(x.ltv)+'</span></div>';}).join('');
+}
+function mcell(k,id){return '<div style="flex:1;min-width:110px;background:#f4f7fa;border-radius:8px;padding:8px 10px"><div style="font-size:10px;color:#5b6b82">'+k+'</div><div class="num" id="'+id+'" style="font-size:15px;font-weight:800;margin-top:2px"></div></div>';}
+function renderBridge(){
+ var box=document.getElementById('bridgeBox'); if(!box)return;
+ var cr=D.cohort_rev&&D.cohort_rev.byScope['전체'];
+ if(!cr){box.innerHTML='<div class="mini">cohort_rev(전체) 필요</div>';return;}
+ var tot={},nw={},newN={};
+ cr.forEach(function(row){row.cells.forEach(function(v,k){if(v==null)return;var cal=addM(row.month,k);tot[cal]=(tot[cal]||0)+v;if(k===0){nw[cal]=(nw[cal]||0)+v;newN[cal]=(newN[cal]||0)+row.n;}});});
+ var cals=Object.keys(tot).sort(); var last=cals[cals.length-1], last3=cals.slice(-3);
+ var newAvg=last3.reduce(function(s,c){return s+(nw[c]||0);},0)/last3.length;
+ var newNavg=last3.reduce(function(s,c){return s+(newN[c]||0);},0)/last3.length;
+ _bridge.keep=(tot[last]||0)-(nw[last]||0); _bridge.newv=newAvg; _bridge.firstAOV=newNavg?newAvg/newNavg:45000; _bridge.exp=_bridge.keep+_bridge.newv;
+ if(GOAL==null){var g=0;try{g=+localStorage.getItem('knollo_goal')||0;}catch(e){}GOAL=g||Math.round(_bridge.exp*1.1/1e6)*1e6;}
+ var gmin=Math.max(1,Math.round(_bridge.exp*0.6/1e8)), gmax=Math.max(gmin+1,Math.round(_bridge.exp*1.6/1e8));
+ var h='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:11px;color:#5b6b82;white-space:nowrap">이번 달 목표</span>'
+  +'<input type="range" id="goalR" min="'+gmin+'" max="'+gmax+'" step="1" value="'+Math.min(gmax,Math.max(gmin,Math.round(GOAL/1e8)))+'" style="flex:1" oninput="onGoal()">'
+  +'<span id="goalOut" class="num" style="font-size:13px;font-weight:800;min-width:64px;text-align:right"></span></div>'
+  +'<div style="height:30px;border-radius:8px;background:#f4f7fa;position:relative;overflow:hidden">'
+  +'<div id="bK" style="position:absolute;left:0;top:0;bottom:0;background:#1f9d57"></div><div id="bN" style="position:absolute;top:0;bottom:0;background:#9FE1CB"></div>'
+  +'<div id="bG" style="position:absolute;top:0;bottom:0;right:0;background:repeating-linear-gradient(45deg,#f5c4b3,#f5c4b3 5px,#faece7 5px,#faece7 10px)"></div>'
+  +'<div id="bM" style="position:absolute;top:-3px;bottom:-3px;width:2px;background:#141c2b"></div></div>'
+  +'<div class="leg" style="margin-top:5px"><span><i style="background:#1f9d57"></i>기존 유지</span><span><i style="background:#9FE1CB"></i>신규</span><span><i style="background:#F0997B"></i>목표 갭</span><span>│ 목표</span></div>'
+  +'<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'+mcell('기대(유지+신규)','mExp')+mcell('목표 갭','mGap')+mcell('달성률','mRate')+mcell('필요 신규','mNew')+mcell('또는 유지 상승','mUp')+'</div>';
+ box.innerHTML=h; onGoal();
+}
+function onGoal(){
+ var goal=(+document.getElementById('goalR').value)*1e8; GOAL=goal; try{localStorage.setItem('knollo_goal',goal);}catch(e){}
+ var keep=_bridge.keep,nv=_bridge.newv,exp=keep+nv,gap=Math.max(0,goal-exp),full=Math.max(goal,exp)||1;
+ document.getElementById('goalOut').textContent=eok(goal);
+ document.getElementById('bK').style.width=(keep/full*100)+'%';
+ document.getElementById('bN').style.left=(keep/full*100)+'%'; document.getElementById('bN').style.width=(nv/full*100)+'%';
+ document.getElementById('bG').style.width=(gap/full*100)+'%'; document.getElementById('bM').style.left=(goal/full*100)+'%';
+ document.getElementById('mExp').textContent=eok(exp);
+ var mg=document.getElementById('mGap'); mg.textContent=gap>0?eok(gap):'달성'; mg.style.color=gap>0?'#c0392b':'#1f8a5b';
+ document.getElementById('mRate').textContent=Math.round(exp/goal*100)+'%';
+ document.getElementById('mNew').textContent=gap>0?fmt(Math.round(gap/_bridge.firstAOV))+'명':'—';
+ document.getElementById('mUp').textContent=gap>0&&keep?'+'+(Math.round(gap/keep*1000)/10)+'%':'—';
+}
+function renderFr(){
+ var box=document.getElementById('frBox'); if(!box)return;
+ var fr=D.sku_fr||[];
+ if(!fr.length){box.innerHTML='<div class="mini">sku_fr 탭 필요(08d_sku_first_repeat_weekly.sql)</div>';return;}
+ var cats=[],weeks=[];
+ fr.forEach(function(r){if(cats.indexOf(r.cat)<0)cats.push(r.cat);if(weeks.indexOf(r.week)<0)weeks.push(r.week);});
+ weeks.sort().reverse();
+ if(!FR_CAT||cats.indexOf(FR_CAT)<0)FR_CAT=cats[0];
+ if(!FR_WEEK||weeks.indexOf(FR_WEEK)<0)FR_WEEK=weeks[0];
+ var h='<div class="btns" id="frCat">'+cats.map(function(c){return '<span class="btn '+(c===FR_CAT?'on':'')+'" data-v="'+c+'" onclick="frCatSel(\''+c.replace(/'/g,"\\'")+'\')">'+c+'</span>';}).join('')+'</div> ';
+ h+='<div class="btns" id="frWeek">'+weeks.slice(0,8).map(function(w){return '<span class="btn '+(w===FR_WEEK?'on':'')+'" data-v="'+w+'" onclick="frWeekSel(\''+w+'\')">'+w+'</span>';}).join('')+'</div>';
+ h+='<div class="leg" style="margin:6px 0"><span><i style="background:#378ADD"></i>첫구매 기여</span><span><i style="background:#1f9d57"></i>재구매 기여</span><span>막대=총매출 · 우측 첫/재%</span></div>';
+ var rows={};
+ fr.filter(function(r){return r.week===FR_WEEK&&r.cat===FR_CAT;}).forEach(function(r){var k=r.rep;rows[k]=rows[k]||{rep:k,nm:r.nm,f:0,rp:0};rows[k].f+=r.frev;rows[k].rp+=r.rrev;});
+ var list=Object.keys(rows).map(function(k){var o=rows[k];o.tot=o.f+o.rp;o.sh=o.tot?o.rp/o.tot:0;return o;}).sort(function(a,b){return b.tot-a.tot;});
+ var mx=Math.max.apply(null,list.map(function(x){return x.tot;}))||1;
+ list.forEach(function(o){
+  h+='<div style="display:flex;align-items:center;gap:8px;margin:5px 0"><span style="width:82px;font-size:11px;color:#5b6b82">'+o.nm+'</span>'
+   +'<div style="flex:1;height:18px;display:flex;border-radius:4px;overflow:hidden;background:#f4f7fa;max-width:'+(o.tot/mx*100)+'%"><i style="width:'+((1-o.sh)*100)+'%;background:#378ADD"></i><i style="width:'+(o.sh*100)+'%;background:#1f9d57"></i></div>'
+   +'<span class="mini" style="width:96px;text-align:right">첫 '+Math.round((1-o.sh)*100)+'% · 재 '+Math.round(o.sh*100)+'%</span></div>';
+ });
+ h+='<div class="wrapx" style="margin-top:8px"><table><tr><th>상품명</th><th class="num">총매출</th><th class="num">첫구매</th><th class="num">재구매</th><th class="num">재구매율</th><th>주도</th><th>주차추이</th></tr>';
+ var wkAsc=weeks.slice().reverse();
+ list.forEach(function(o){
+  var dr=o.sh>=0.55?['재구매 주도','#0F6E56']:(o.sh<=0.40?['신규 주도','#0C447C']:['균형','#444441']);
+  var sp='';
+  wkAsc.forEach(function(w){var f=0,rp=0;fr.forEach(function(r){if(r.week===w&&r.cat===FR_CAT&&r.rep===o.rep){f+=r.frev;rp+=r.rrev;}});var s=(f+rp)?rp/(f+rp):0;sp+='<i style="display:inline-block;width:4px;height:'+Math.max(1,Math.round(s*16))+'px;background:#1f9d57;border-radius:1px"></i>';});
+  h+='<tr><td class="l">'+o.nm+' <span class="mini">'+o.rep+'</span></td><td class="num">'+eok(o.tot)+'</td><td class="num" style="color:#185FA5">'+eok(o.f)+'</td><td class="num" style="color:#0F6E56">'+eok(o.rp)+'</td><td class="num" style="font-weight:700">'+Math.round(o.sh*100)+'%</td><td style="color:'+dr[1]+'">'+dr[0]+'</td><td><span style="display:inline-flex;align-items:flex-end;gap:2px;height:16px">'+sp+'</span></td></tr>';
  });
  h+='</table></div>';
- h+='<div class="note">리텐션 = 각 경과월에 (재)구매한 인원 ÷ 코호트 첫구매자. 월-단위 재방문 기준(누적 아님). 최근 코호트일수록 경과월이 짧아 삼각형으로 채워집니다.</div></div>';
- host.innerHTML=h;
+ box.innerHTML=h;
 }
+function frCatSel(c){FR_CAT=c;renderFr();}
+function frWeekSel(w){FR_WEEK=w;renderFr();}
 
 /* FALLBACK (샘플·실 상품명) */
 var FALLBACK={meta:{latest_period:"2026-09-14",n:37576,built_at:"2026-09-14 06:00",periods:2,sample:true},
@@ -279,16 +385,7 @@ var FALLBACK={meta:{latest_period:"2026-09-14",n:37576,built_at:"2026-09-14 06:0
   {period:"2026-09-14",cells:LIFE.map(function(L,li){return {life:L,cats:CATS.map(function(C,ci){var base=[[380,120,30,10],[190,350,90,30],[85,400,205,320],[115,175,245,40],[46,160,220,305],[124,418,710,2930]][li];var f=[1,.5,.35,.28,.22,.2][ci];return {cat:C,core:Math.round(base[0]*f),grow:Math.round(base[1]*f),risk:Math.round(base[2]*f),non:Math.round(base[3]*f)};})};})}
  ],
  cat_contrib:(function(){var a=[];var cats=CATS;for(var i=0;i<21;i++){var dt=new Date(2026,8,17-i);var d=dt.toISOString().slice(0,10);cats.forEach(function(c,ci){var b=[2200000,1500000,620000,560000,440000,1300000][ci];var rev=Math.round(b*(0.85+((i+ci)%4)*0.08));var p=[.15,.2,.08,.06,.16,.11][ci];a.push({d:d,cat:c,rev:rev,crm_rev:Math.round(rev*p)});});}return a;})(),
- cat_top_sku:{"허니콤츄":[{rnk:1,rep_sku:"SP04987",name:"치킨S",rev:8200000,ratio:38},{rnk:2,rep_sku:"SP11609",name:"치킨L",rev:5100000,ratio:24},{rnk:3,rep_sku:"SP06915",name:"베지M",rev:3200000,ratio:15},{rnk:4,rep_sku:"SP07225",name:"황태M",rev:2600000,ratio:12},{rnk:5,rep_sku:"SP09174",name:"카밍M",rev:2300000,ratio:11}],
-  "덴탈라인업":[{rnk:1,rep_sku:"SP07244",name:"오랄겔(소)",rev:6100000,ratio:44},{rnk:2,rep_sku:"SP09675",name:"오랄겔(대)",rev:3600000,ratio:26},{rnk:3,rep_sku:"SP07617",name:"바이레프 바이플라그 칫솔 10p",rev:2100000,ratio:15},{rnk:4,rep_sku:"SP09201",name:"삼각칫솔",rev:1300000,ratio:9},{rnk:5,rep_sku:"SP07244",name:"오랄겔(소)",rev:800000,ratio:6}],
-  "영양제":[{rnk:1,rep_sku:"SP06999",name:"유산균",rev:2900000,ratio:32},{rnk:2,rep_sku:"SP09999",name:"에너지핏",rev:2100000,ratio:23},{rnk:3,rep_sku:"SP09696",name:"브레스핏",rev:1400000,ratio:15},{rnk:4,rep_sku:"SP07121",name:"멀티핏",rev:1100000,ratio:12},{rnk:5,rep_sku:"SP09090",name:"조인트핏",rev:800000,ratio:9}],
-  "위생/패드":[{rnk:1,rep_sku:"SP07809",name:"퍼즐패드",rev:2600000,ratio:42},{rnk:2,rep_sku:"SP08924",name:"습관패드 대형 3봉",rev:1700000,ratio:27},{rnk:3,rep_sku:"SP07807",name:"퍼즐매트 표준형",rev:1100000,ratio:18},{rnk:4,rep_sku:"SP10028",name:"바디티슈",rev:500000,ratio:8},{rnk:5,rep_sku:"SP07842",name:"풉백",rev:300000,ratio:5}],
-  "산책용품":[{rnk:1,rep_sku:"SP08906",name:"이지플레이 하네스M",rev:1900000,ratio:40},{rnk:2,rep_sku:"SP08907",name:"이지플레이 리쉬",rev:1200000,ratio:25},{rnk:3,rep_sku:"SP08905",name:"이지플레이 하네스S",rev:800000,ratio:17}],
-  "간식":[{rnk:1,rep_sku:"SP01197",name:"드룰린 한입육포 소고기 180g",rev:1400000,ratio:20},{rnk:2,rep_sku:"SP01402",name:"드룰린 바로트릿 소고기 130g",rev:1000000,ratio:14},{rnk:3,rep_sku:"SP01263",name:"드룰린 즐겅즐겅 한우스틱 S",rev:700000,ratio:10}]},
- cat_sku_code:{
-  "SP04987":[{rnk:1,sku_code:"04987_06999_07244",rev:3200000,orders:410,ratio:39},{rnk:2,sku_code:"big_dental_04987",rev:2100000,orders:260,ratio:26},{rnk:3,sku_code:"dental_04987",rev:1400000,orders:180,ratio:17},{rnk:4,sku_code:"09201_07244_04987",rev:900000,orders:120,ratio:11},{rnk:5,sku_code:"4987_8903_7477_9571",rev:600000,orders:70,ratio:7}],
-  "SP07244":[{rnk:1,sku_code:"04987_06999_07244",rev:2600000,orders:410,ratio:43},{rnk:2,sku_code:"big_dental_04987",rev:1500000,orders:260,ratio:25},{rnk:3,sku_code:"09201_07244_07225",rev:1000000,orders:150,ratio:16},{rnk:4,sku_code:"dental_06915",rev:600000,orders:90,ratio:10},{rnk:5,sku_code:"07477_07244_07617",rev:400000,orders:55,ratio:6}],
-  "SP06999":[{rnk:1,sku_code:"04987_06999_07244",rev:1700000,orders:410,ratio:41},{rnk:2,sku_code:"09359_06999_07121",rev:1100000,orders:210,ratio:26},{rnk:3,sku_code:"06915_06999_07244",rev:800000,orders:150,ratio:19},{rnk:4,sku_code:"big_dental_07225",rev:600000,orders:95,ratio:14}]},
+ cat_top_sku:{},cat_sku_code:{},
  conversion:[
   {campaign:"20260914_RFM챔피언",sent:1028,c3:132,r3:6100000,c5:181,r5:8400000,c7:214,r7:9820000,coupon_rev:6900000,contrib_rev:1720000,noncoupon_rev:1200000,fail:814},
   {campaign:"20260914_이탈위기충성",sent:275,c3:38,r3:1900000,c5:54,r5:2700000,c7:63,r7:3150000,coupon_rev:2380000,contrib_rev:470000,noncoupon_rev:300000,fail:212},
@@ -307,6 +404,13 @@ var FALLBACK={meta:{latest_period:"2026-09-14",n:37576,built_at:"2026-09-14 06:0
   return a;})(),
  cohort:(function(){var offs=[];for(var i=0;i<=12;i++)offs.push(i);
   function mk(base,d0){var arr=[];for(var m=0;m<9;m++){var mm='2026-'+('0'+(m+1)).slice(-2);var n=Math.round(base*(0.8+0.05*m));var maxk=8-m;var cells=[];for(var k=0;k<=12;k++){if(k>maxk){cells.push(null);continue;}var r=k===0?100:Math.round(d0*Math.pow(0.72,k-1)*10)/10;cells.push({m:k,a:Math.round(n*r/100),r:r});}arr.push({month:mm,n:n,cells:cells});}return arr;}
-  return {offsets:offs,scopes:['전체','허니콤츄','영양제'],byScope:{'전체':mk(1200,34),'허니콤츄':mk(520,41),'영양제':mk(180,26)}};})()};
+  return {offsets:offs,scopes:['전체','허니콤츄','영양제'],byScope:{'전체':mk(1200,34),'허니콤츄':mk(520,41),'영양제':mk(180,26)}};})()
+ ,cohort_rev:(function(){var offs=[];for(var i=0;i<=12;i++)offs.push(i);
+  function mk(base,d0,aov){var arr=[];for(var m=0;m<9;m++){var mm='2026-'+('0'+(m+1)).slice(-2);var n=Math.round(base*(0.8+0.05*m));var maxk=8-m;var cells=[];for(var k=0;k<=12;k++){if(k>maxk){cells.push(null);continue;}var r=k===0?1:d0/100*Math.pow(0.72,k-1);cells.push(Math.round(n*r*aov));}arr.push({month:mm,n:n,cells:cells});}return arr;}
+  return {offsets:offs,scopes:['전체','허니콤츄','영양제'],byScope:{'전체':mk(1200,34,52000),'허니콤츄':mk(520,41,48000),'영양제':mk(180,26,40000)}};})()
+ ,sku_fr:(function(){var a=[];var defs={'허니콤츄':[['SP04987','치킨S',145,0.62],['SP11609','치킨L',110,0.55],['SP06915','베지M',82,0.58],['SP07225','황태M',70,0.30],['SP09174','카밍M',48,0.34]],'영양제':[['SP06999','유산균',63,0.60],['SP09999','에너지핏',46,0.28],['SP09696','브레스핏',30,0.50],['SP07121','멀티핏',24,0.25],['SP09090','조인트핏',18,0.42]]};
+  var wks=['2026-08-25','2026-09-01','2026-09-08','2026-09-15','2026-09-22'];
+  wks.forEach(function(w,wi){Object.keys(defs).forEach(function(cat){defs[cat].forEach(function(d){var tot=d[2]*1e6*(0.9+0.03*wi);var sh=d[3];a.push({week:w,cat:cat,rep:d[0],nm:d[1],frev:Math.round(tot*(1-sh)),rrev:Math.round(tot*sh),ford:Math.round(tot*(1-sh)/50000),rord:Math.round(tot*sh/55000)});});});});
+  return a;})()};
 fetch('report_data.json').then(r=>r.ok?r.json():Promise.reject()).then(render).catch(()=>render(FALLBACK));
 </script></body></html>
