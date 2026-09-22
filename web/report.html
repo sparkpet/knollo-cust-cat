@@ -8,7 +8,7 @@ body{font-family:-apple-system,'Segoe UI','Noto Sans KR',sans-serif;color:var(--
 .hd{display:flex;justify-content:space-between;align-items:flex-end}h1{font-size:21px;margin:0}.sub{font-size:12px;color:var(--mut);margin-top:3px}
 .meta{font-size:12px;color:var(--mut);text-align:right}.meta b{color:var(--brand)}
 .banner{display:none;font-size:11.5px;background:#fff6ed;color:#7a5a1e;border-radius:9px;padding:7px 12px;margin:10px 0}
-.menu{display:flex;gap:8px;margin:16px 0 4px;flex-wrap:wrap}
+.menu{display:flex;gap:8px;margin:0 0 4px;padding:12px 0 8px;flex-wrap:wrap;position:sticky;top:0;z-index:30;background:rgba(247,249,252,.9);backdrop-filter:blur(8px)}
 .mi{padding:9px 15px;border-radius:11px;background:rgba(255,255,255,.6);border:1px solid var(--line);cursor:pointer;font-weight:700;font-size:13px;color:#5b6b82;backdrop-filter:blur(6px)}
 .mi.on{background:#fff;color:var(--brand);box-shadow:0 4px 14px rgba(31,157,87,.14)}
 .page{display:none}.page.on{display:block}
@@ -43,7 +43,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}td.l{text-align
 .glcard{border:1px solid var(--line);border-radius:11px;padding:11px 13px;background:#fff;border-left:4px solid var(--brand)}
 .glcard .t{font-weight:800;font-size:12.5px;margin-bottom:3px;color:#1e2a3a}.glcard .x{font-size:11px;color:#41505f;line-height:1.5}
 .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
-.chip{font-size:10px;font-weight:700;border-radius:6px;padding:1px 8px;background:#eef1f5;color:#41505f}.chip.c{color:#fff}
+.chip{font-size:10px;font-weight:700;border-radius:6px;padding:1px 8px;background:#eef1f5;color:#41505f;white-space:nowrap;display:inline-block}.chip.c{color:#fff}
 .leg{font-size:10px;color:#5b6b82;margin-top:6px;display:flex;gap:12px;flex-wrap:wrap}.leg span{display:inline-flex;gap:4px;align-items:center}.leg i{width:10px;height:10px;border-radius:2px}
 </style></head><body><div class="wrap">
 <div class="hd"><div><h1>Knollo 고객 유형화 리포트</h1><div class="sub">라이프사이클 × 카테고리 × 브랜드충성 · CRM 기여·전환 · 시트→Apps Script→GitHub 자동빌드</div></div><div class="meta" id="meta"></div></div>
@@ -90,9 +90,9 @@ function glossary(){
  function chips(arr){return '<div class="chips">'+arr.map(function(a){return chip(a[0],a[1]);}).join('')+'</div>';}
  function card(t,x,extra){return `<div class="glcard" ${extra&&extra.color?`style="border-left-color:${extra.color}"`:''}><div class="t">${t}</div><div class="x">${x}</div>${extra&&extra.chips?chips(extra.chips):''}</div>`;}
  function deftbl(title,sub,colHead,rows){
-   return `<div class="glcard"><div class="t">${title}</div><div class="x" style="margin-bottom:6px">${sub}</div>`+
-     `<table><tr><th style="text-align:left">${colHead}</th><th style="text-align:left">정의</th></tr>`+
-     rows.map(function(r){return `<tr><td style="text-align:left"><span class="chip" style="background:${r[1]};color:${lum(r[1])<0.62?'#fff':'#2c3a4a'}">${r[0]}</span></td><td style="text-align:left" class="x">${r[2]}</td></tr>`;}).join('')+
+   return `<div class="glcard" style="grid-column:1/-1"><div class="t">${title}</div><div class="x" style="margin-bottom:6px">${sub}</div>`+
+     `<table><tr><th style="text-align:left;width:96px">${colHead}</th><th style="text-align:left">정의</th></tr>`+
+     rows.map(function(r){return `<tr><td style="text-align:left;white-space:nowrap;vertical-align:top"><span class="chip" style="background:${r[1]};color:${lum(r[1])<0.62?'#fff':'#2c3a4a'}">${r[0]}</span></td><td style="text-align:left;vertical-align:top" class="x">${r[2]}</td></tr>`;}).join('')+
      `</table></div>`;
  }
  var lifeTbl=deftbl("라이프사이클 <span class='mini'>· 행축</span>","<b>최근성</b>(마지막 결제일로부터 오늘까지 지난 일수) × <b>빈도</b>(주문 건수 = 생성된 주문번호 개수)로 나눕니다. 고객당 <b>1개만</b> 배정(겹치지 않음).","단계",[
@@ -399,7 +399,7 @@ function renderFr(){
  var list=Object.keys(rows).map(function(k){var o=rows[k];o.tot=o.f+o.rp;o.sh=o.tot?o.rp/o.tot:0;return o;}).sort(function(a,b){return b.tot-a.tot;});
  var mx=Math.max.apply(null,list.map(function(x){return x.tot;}))||1;
  var LIM=6, shown=FR_EXPAND?list:list.slice(0,LIM);
- h+='<div style="min-height:170px">';
+ h+='<div style="min-height:170px'+(FR_EXPAND?';max-height:250px;overflow:auto':'')+'">';
  shown.forEach(function(o){
   h+='<div style="display:flex;align-items:center;gap:8px;margin:5px 0"><span style="width:82px;font-size:11px;color:#5b6b82">'+o.nm+'</span>'
    +'<div style="flex:1;height:18px;display:flex;border-radius:4px;overflow:hidden;background:#f4f7fa;max-width:'+(o.tot/mx*100)+'%"><i style="width:'+((1-o.sh)*100)+'%;background:#378ADD"></i><i style="width:'+(o.sh*100)+'%;background:#1f9d57"></i></div>'
@@ -407,7 +407,7 @@ function renderFr(){
  });
  h+='</div>';
  if(list.length>LIM)h+='<div class="btns" style="margin-top:2px"><span class="btn" onclick="frMore()">'+(FR_EXPAND?'접기 ▲':'더 보기 ▼ ('+list.length+'개 중 '+LIM+')')+'</span></div>';
- h+='<div class="wrapx" style="margin-top:8px"><table><tr><th>상품명</th><th class="num">총매출</th><th class="num">첫구매</th><th class="num">재구매</th><th class="num">재구매율</th><th>주도</th><th>주차추이</th></tr>';
+ h+='<div class="wrapx'+(FR_EXPAND?' scrolly':'')+'" style="margin-top:8px"><table><tr><th>상품명</th><th class="num">총매출</th><th class="num">첫구매</th><th class="num">재구매</th><th class="num">재구매율</th><th>주도</th><th>주차추이</th></tr>';
  var wkAsc=weeks.slice().reverse();
  shown.forEach(function(o){
   var dr=o.sh>=0.55?['재구매 주도','#0F6E56']:(o.sh<=0.40?['신규 주도','#0C447C']:['균형','#444441']);
