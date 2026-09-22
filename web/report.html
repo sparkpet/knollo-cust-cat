@@ -247,7 +247,7 @@ function convSku(cp,el){
 }
 
 /* ④ 코호트 — 매출·LTV(①⑤) · 카테고리 LTV(⑥) · 브리지·역산(②③) · SKU 첫/재(⑦) */
-var COH_SCOPE=null, COH_MODE='ret', FR_CAT=null, FR_WEEK=null, FR_EXPAND=false, GOAL=null;
+var COH_SCOPE=null, COH_MODE='ret', COH_H=3, FR_CAT=null, FR_WEEK=null, FR_EXPAND=false, GOAL=null;
 var _bridge={keep:0,newv:0,firstAOV:45000,exp:0};
 function eok(m){return (Math.round(Number(m||0)/1e6)/100).toFixed(2)+'억';}
 function addM(ymk,k){var p=String(ymk).split('-');var d=new Date(Date.UTC(+p[0],+p[1]-1+k,1));return d.getUTCFullYear()+'-'+('0'+(d.getUTCMonth()+1)).slice(-2);}
@@ -265,15 +265,17 @@ function cohortTab(scope){
  h+='<div class="d">행=첫구매월 · 열=경과 개월 · 우측 <b>vs평균</b>=코호트 성과(▲앞섬/▼뒤처짐).</div>';
  h+='<div class="btns" id="cohScope">'+scopes.map(function(s){return '<span class="btn '+(s===COH_SCOPE?'on':'')+'" data-v="'+s+'" onclick="cohScopeSel(\''+s.replace(/'/g,"\\'")+'\')">'+s+'</span>';}).join('')+'</div> ';
  h+='<div class="btns" id="cohMode">'+[['ret','재구매율'],['rev','매출'],['ltv','1인 누적 LTV']].map(function(m){return '<span class="btn '+(m[0]===COH_MODE?'on':'')+'" data-v="'+m[0]+'" onclick="cohModeSel(\''+m[0]+'\')">'+m[1]+'</span>';}).join('')+'</div>';
+ h+=' <span class="mini">우측 비교기준</span> <div class="btns" id="cohH">'+[3,6,12].map(function(H){return '<span class="btn '+(H===COH_H?'on':'')+'" data-v="'+H+'" onclick="cohHSel('+H+')">M'+H+'</span>';}).join('')+'</div>';
  h+='<div id="cohHeat"></div></div>';
  h+='<div class="tile"><h2>카테고리별 1인 누적 LTV</h2><div class="d">획득 고객 1인당 지금까지 낸 매출(카테 총매출 ÷ 첫구매자).</div><div id="cohCat"></div></div>';
- h+='<div class="tile"><h2>월 매출 브리지 · 목표 역산</h2><div class="d">기존 유지 + 신규 vs 목표. 갭을 신규 획득 또는 유지 상승으로 역산.</div><div id="bridgeBox"></div></div>';
+ h+='<div class="tile"><h2>월 매출 브리지 · 목표 역산</h2><div class="d">기대 = 기존 유지(최근 3개월 평균) + 신규(최근 3개월 평균) = <b>정상 페이스</b>. <b style="color:#3b7bbf">파란선</b>=이번 달 실제 · <b>검은선</b>=목표. 갭을 신규/유지로 역산.</div><div id="bridgeBox"></div></div>';
  h+='<div class="tile"><h2>SKU 라인 · 첫구매 vs 재구매 (주차)</h2><div class="d">SKU 라인 관점(B): 그 rep_sku 첫 구매=첫구매, 이후=재구매. 재구매 기여가 근거.</div><div id="frBox"></div></div>';
  host.innerHTML=h;
  renderCohHeat(); renderCohCat(); renderBridge(); renderFr();
 }
 function cohScopeSel(s){COH_SCOPE=s;markBtns('cohScope',s);renderCohHeat();}
 function cohModeSel(m){COH_MODE=m;markBtns('cohMode',m);renderCohHeat();}
+function cohHSel(H){COH_H=H;markBtns('cohH',String(H));renderCohHeat();}
 function renderCohHeat(){
  var mode=COH_MODE, box=document.getElementById('cohHeat'); if(!box)return;
  var src=mode==='ret'?D.cohort:D.cohort_rev;
@@ -282,10 +284,14 @@ function renderCohHeat(){
  function cumLtv(row,k){var s=0,any=false;for(var j=0;j<=k;j++){var v=row.cells[j];if(v==null)continue;any=true;s+=v;}return any?s/(row.n||1):null;}
  var maxV=0,maxL=0;
  rows.forEach(function(row){offs.forEach(function(k){var c=row.cells[k];if(c!=null&&mode!=='ret')maxV=Math.max(maxV,c);var l=cumLtv(row,k);if(l!=null)maxL=Math.max(maxL,l);});});
- var perf=rows.map(function(row){if(mode==='ret'){var a=0,c=0;offs.forEach(function(k){if(k>=1&&row.cells[k]!=null){a+=row.cells[k].r;c++;}});return c?a/c:0;}for(var k=offs.length-1;k>=0;k--){var l=cumLtv(row,k);if(l!=null)return l;}return 0;});
- var avg=perf.reduce(function(a,b){return a+b;},0)/(perf.length||1);
+ var H=COH_H;
+ function valH(row){if(row.cells[H]==null)return null;return mode==='ret'?row.cells[H].r:cumLtv(row,H);}
+ var vs=rows.map(valH);
+ var mat=vs.filter(function(x){return x!=null;});
+ var avgH=mat.length?mat.reduce(function(a,b){return a+b;},0)/mat.length:0;
  var basis=mode==='ret'?'셀 = 재구매율 %(인원 기준) · M0=100%':(mode==='rev'?'셀 = 그 경과월 <b>실매출</b>(units 비중 배분) · 표기 단위 <b>억원</b>':'셀 = <b>1인 누적 LTV</b> = (M0~해당월 누적매출) ÷ 코호트 첫구매자 · 표기 단위 <b>원</b>');
- var h='<div class="mini" style="margin:2px 0 6px;color:#41505f">'+basis+'</div><div class="wrapx scrolly"><table><tr><th>첫구매월</th><th class="num">코호트</th>'+offs.map(function(k){return '<th>M'+k+'</th>';}).join('')+'<th>vs평균</th></tr>';
+ var hcol='M'+H+(mode==='ret'?' 재구매율':' LTV');
+ var h='<div class="mini" style="margin:2px 0 6px;color:#41505f">'+basis+'</div><div class="wrapx scrolly"><table><tr><th>첫구매월</th><th class="num">코호트</th>'+offs.map(function(k){return '<th>M'+k+'</th>';}).join('')+'<th>'+hcol+'</th></tr>';
  rows.forEach(function(row,ri){
   h+='<tr><td class="rh">'+row.month+'</td><td class="num" style="color:#6a7789">'+fmt(row.n)+'명</td>';
   offs.forEach(function(k){var c=row.cells[k];if(c==null){h+='<td style="background:#fafbfc"></td>';return;}
@@ -294,10 +300,12 @@ function renderCohHeat(){
    else if(mode==='rev'){disp=eok(c);t=maxV?c/maxV:0;}
    else{var l=cumLtv(row,k);disp=won(l);t=maxL?l/maxL:0;}
    h+='<td class="num" style="background:'+tealHeat(t)+'">'+disp+'</td>';});
-  var d=perf[ri]-avg, pc=avg?Math.round(d/avg*100):0, col=pc>=0?'#1f8a5b':'#c0392b';
-  h+='<td class="num" style="color:'+col+';font-weight:700">'+(pc>=0?'▲':'▼')+Math.abs(pc)+'%</td></tr>';
+  var v=vs[ri];
+  if(v==null){h+='<td class="mini" style="color:#8a97a8">—</td></tr>';}
+  else{var pc=avgH?Math.round((v-avgH)/avgH*100):0, col=pc>=0?'#1f8a5b':'#c0392b';
+   h+='<td class="num"><b>'+(mode==='ret'?v+'%':won(v))+'</b><div class="mini" style="color:'+col+'">'+(pc>=0?'▲':'▼')+Math.abs(pc)+'% vs평균</div></td></tr>';}
  });
- h+='</table></div><div class="mini" style="margin-top:5px">재구매율=인원 기준(cohort) · 매출/LTV=cohort_rev · vs평균='+(mode==='ret'?'M1+ 평균 재구매율':'1인 누적 LTV')+' 대비.</div>';
+ h+='</table></div><div class="mini" style="margin-top:5px">우측 열 = <b>M'+H+' 시점</b>의 '+(mode==='ret'?'재구매율':'1인 누적 LTV')+' — <b>같은 성숙도(M'+H+')</b>로 코호트를 공정 비교. 아래 ▲/▼ = 그 시점 코호트 평균 대비. M'+H+' 미도달 코호트는 —.</div>';
  box.innerHTML=h;
 }
 function renderCohCat(){
@@ -318,7 +326,9 @@ function renderBridge(){
  var cals=Object.keys(tot).sort(); var last=cals[cals.length-1], last3=cals.slice(-3);
  var newAvg=last3.reduce(function(s,c){return s+(nw[c]||0);},0)/last3.length;
  var newNavg=last3.reduce(function(s,c){return s+(newN[c]||0);},0)/last3.length;
- _bridge.keep=(tot[last]||0)-(nw[last]||0); _bridge.newv=newAvg; _bridge.firstAOV=newNavg?newAvg/newNavg:45000; _bridge.exp=_bridge.keep+_bridge.newv;
+ var keep3=last3.map(function(c){return (tot[c]||0)-(nw[c]||0);});
+ _bridge.keep=keep3.reduce(function(s,x){return s+x;},0)/(keep3.length||1);
+ _bridge.newv=newAvg; _bridge.firstAOV=newNavg?newAvg/newNavg:45000; _bridge.exp=_bridge.keep+_bridge.newv; _bridge.actual=(tot[last]||0);
  if(GOAL==null){var g=0;try{g=+localStorage.getItem('knollo_goal')||0;}catch(e){}GOAL=g||Math.round(_bridge.exp*1.1/1e6)*1e6;}
  var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap"><span style="font-size:11px;color:#5b6b82;white-space:nowrap">이번 달 목표</span>'
   +'<span class="btn" onclick="goalStep(-1)" title="-100만원">−</span>'
@@ -329,19 +339,22 @@ function renderBridge(){
   +'<div style="height:30px;border-radius:8px;background:#f4f7fa;position:relative;overflow:hidden">'
   +'<div id="bK" style="position:absolute;left:0;top:0;bottom:0;background:#1f9d57"></div><div id="bN" style="position:absolute;top:0;bottom:0;background:#9FE1CB"></div>'
   +'<div id="bG" style="position:absolute;top:0;bottom:0;right:0;background:repeating-linear-gradient(45deg,#f5c4b3,#f5c4b3 5px,#faece7 5px,#faece7 10px)"></div>'
+  +'<div id="bA" style="position:absolute;top:-3px;bottom:-3px;width:2px;background:#3b7bbf"></div>'
   +'<div id="bM" style="position:absolute;top:-3px;bottom:-3px;width:2px;background:#141c2b"></div></div>'
-  +'<div class="leg" style="margin-top:5px"><span><i style="background:#1f9d57"></i>기존 유지</span><span><i style="background:#9FE1CB"></i>신규</span><span><i style="background:#F0997B"></i>목표 갭</span><span>│ 목표</span></div>'
-  +'<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'+mcell('기대(유지+신규)','mExp')+mcell('목표 갭','mGap')+mcell('달성률','mRate')+mcell('필요 신규','mNew')+mcell('또는 유지 상승','mUp')+'</div>';
+  +'<div class="leg" style="margin-top:5px"><span><i style="background:#1f9d57"></i>기존 유지</span><span><i style="background:#9FE1CB"></i>신규</span><span><i style="background:#F0997B"></i>목표 갭</span><span style="color:#3b7bbf"><b>│</b> 이번 달 실제</span><span><b>│</b> 목표</span></div>'
+  +'<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'+mcell('이번 달 실제','mAct')+mcell('기대(유지+신규)','mExp')+mcell('목표 갭','mGap')+mcell('달성률(기대)','mRate')+mcell('필요 신규','mNew')+mcell('또는 유지 상승','mUp')+'</div>';
  box.innerHTML=h; onGoal();
 }
 function goalStep(dir){var el=document.getElementById('goalN');el.value=Math.max(0,(+el.value||0)+dir*1e6);onGoal();}
 function onGoal(){
  var goal=Math.max(0,+document.getElementById('goalN').value||0); GOAL=goal; try{localStorage.setItem('knollo_goal',goal);}catch(e){}
- var keep=_bridge.keep,nv=_bridge.newv,exp=keep+nv,gap=Math.max(0,goal-exp),full=Math.max(goal,exp)||1;
+ var keep=_bridge.keep,nv=_bridge.newv,exp=keep+nv,act=_bridge.actual||0,gap=Math.max(0,goal-exp),full=Math.max(goal,exp,act)||1;
  document.getElementById('goalOut').textContent=eok(goal);
  document.getElementById('bK').style.width=(keep/full*100)+'%';
  document.getElementById('bN').style.left=(keep/full*100)+'%'; document.getElementById('bN').style.width=(nv/full*100)+'%';
  document.getElementById('bG').style.width=(gap/full*100)+'%'; document.getElementById('bM').style.left=(goal/full*100)+'%';
+ document.getElementById('bA').style.left=(act/full*100)+'%';
+ var ma=document.getElementById('mAct'); ma.textContent=eok(act); ma.style.color=act<exp?'#c0392b':'#1f8a5b';
  document.getElementById('mExp').textContent=eok(exp);
  var mg=document.getElementById('mGap'); mg.textContent=gap>0?eok(gap):'달성'; mg.style.color=gap>0?'#c0392b':'#1f8a5b';
  document.getElementById('mRate').textContent=Math.round(exp/goal*100)+'%';
